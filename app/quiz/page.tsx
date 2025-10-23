@@ -40,38 +40,27 @@ type QItem = {
   options: string[] // shuffled once so review shows same order
 }
 
-/* ---------------- Shell with hero-like blobs ---------------- */
+/* ---------------- Updated Shell: Hero-style gradient background ---------------- */
 function SectionShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative isolate min-h-screen bg-gray-900">
-      {/* top blob */}
+    <div className="relative isolate min-h-screen">
+      {/* Background gradient (same as HeroSection) */}
       <div
-        aria-hidden="true"
-        className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
-      >
-        <div
-          style={{
-            clipPath:
-              'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
-          }}
-          className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 opacity-20 sm:left-[calc(50%-30rem)] sm:w-[64rem]"
-        />
-      </div>
-      {/* bottom blob */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]"
-      >
-        <div
-          style={{
-            clipPath:
-              'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
-          }}
-          className="relative left-[calc(50%+3rem)] aspect-[1155/678] w-[36rem] -translate-x-1/2 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 opacity-20 sm:left-[calc(50%+36rem)] sm:w-[64rem]"
-        />
-      </div>
+        className="absolute inset-0 -z-10"
+        style={{
+          background: `
+            linear-gradient(
+              to bottom,
+              #89E5F0 0%,
+              #B6EFF6 25%,
+              #CCF3FA 67%,
+              #FAE9FF 100%
+            )
+          `,
+        }}
+      />
 
-      {/* center container: horizontally always; vertically from md+ */}
+      {/* Center container */}
       <main className="px-6 lg:px-8 py-10 sm:py-14 md:min-h-screen md:flex md:items-center md:justify-center">
         <div className="w-full max-w-3xl">{children}</div>
       </main>
@@ -200,15 +189,15 @@ export default function QuizPage() {
   if (phase === 'setup') {
     return (
       <SectionShell>
-        <Card className="bg-white/5 ring-1 ring-white/10">
+        <Card className="bg-white/80 backdrop-blur-sm border border-white/50 shadow-lg">
           <CardHeader>
-            <CardTitle className="text-white">Start a Quiz</CardTitle>
+            <CardTitle className="text-gray-900">Start a Quiz</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Category */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Category</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
                 <Select
                   value={String(catId)}
                   onValueChange={(val: 'any' | `${number}`) => {
@@ -223,10 +212,10 @@ export default function QuizPage() {
                     }
                   }}
                 >
-                  <SelectTrigger className="w-full bg-white/5 ring-1 ring-white/10 text-white">
+                  <SelectTrigger className="w-full bg-white/70 text-gray-900 border-gray-300">
                     <SelectValue placeholder="Any Category" />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-900 text-white border-white/10">
+                  <SelectContent className="bg-white text-gray-900 border-gray-300">
                     <SelectItem value="any">Any Category</SelectItem>
                     {categories.map((c) => (
                       <SelectItem key={c.id} value={String(c.id)}>
@@ -239,15 +228,15 @@ export default function QuizPage() {
 
               {/* Difficulty */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Difficulty</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty</label>
                 <Select
                   value={String(difficulty)}
                   onValueChange={(val: 'any' | Diff) => setDifficulty(val)}
                 >
-                  <SelectTrigger className="w-full bg-white/5 ring-1 ring-white/10 text-white">
+                  <SelectTrigger className="w-full bg-white/70 text-gray-900 border-gray-300">
                     <SelectValue placeholder="Any" />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-900 text-white border-white/10">
+                  <SelectContent className="bg-white text-gray-900 border-gray-300">
                     <SelectItem value="any">Any</SelectItem>
                     <SelectItem value="easy">Easy</SelectItem>
                     <SelectItem value="medium">Medium</SelectItem>
@@ -258,10 +247,15 @@ export default function QuizPage() {
             </div>
 
             <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2">
-              <Button asChild variant="ghost" className="text-white">
+              <Button asChild variant="ghost" className="text-gray-900 hover:bg-gray-100">
                 <Link href="/">Cancel</Link>
               </Button>
-              <Button onClick={startQuiz}>Start</Button>
+              <Button
+                onClick={startQuiz}
+                className="bg-lime-400 hover:bg-lime-500 text-gray-900 font-semibold"
+              >
+                Start
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -272,13 +266,13 @@ export default function QuizPage() {
   if (phase === 'loading') {
     return (
       <SectionShell>
-        <Card className="bg-white/5 ring-1 ring-white/10">
+        <Card className="bg-white/80 backdrop-blur-sm border border-white/50 shadow-lg">
           <CardHeader>
-            <CardTitle className="text-white">Loading quiz…</CardTitle>
+            <CardTitle className="text-gray-900">Loading quiz…</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-2 w-full rounded bg-white/10 overflow-hidden">
-              <div className="h-2 w-1/3 animate-pulse bg-white/30" />
+            <div className="h-2 w-full rounded bg-gray-200 overflow-hidden">
+              <div className="h-2 w-1/3 animate-pulse bg-lime-400" />
             </div>
           </CardContent>
         </Card>
@@ -289,13 +283,13 @@ export default function QuizPage() {
   if (phase === 'error') {
     return (
       <SectionShell>
-        <div className="text-center">
-          <h1 className="text-3xl sm:text-4xl font-bold text-white">Couldn’t start the quiz</h1>
-          <p className="mt-3 text-gray-300">Please refresh to try again.</p>
+        <div className="text-center max-w-md mx-auto">
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">Couldn’t start the quiz</h1>
+          <p className="mt-3 text-gray-600">Please refresh to try again.</p>
           <div className="mt-6">
             <Link
               href="/"
-              className="rounded-md bg-white/10 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/20"
+              className="rounded-md bg-lime-400 px-5 py-2.5 text-sm font-semibold text-gray-900 hover:bg-lime-500"
             >
               Back to Home
             </Link>
@@ -311,40 +305,45 @@ export default function QuizPage() {
       <SectionShell>
         <div className="space-y-6">
           {/* summary */}
-          <Card className="bg-white/5 ring-1 ring-white/10">
+          <Card className="bg-white/80 backdrop-blur-sm border border-white/50 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-white">Your Results</CardTitle>
+              <CardTitle className="text-gray-900">Your Results</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="text-white text-xl font-semibold">
+                <div className="text-gray-900 text-xl font-semibold">
                   {score} / {items.length} correct
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge className="bg-indigo-500">{catName}</Badge>
+                  <Badge className="bg-indigo-100 text-indigo-800">{catName}</Badge>
                   {difficulty !== 'any' && (
-                    <Badge variant="outline" className="text-white border-white/20">
+                    <Badge variant="outline" className="text-gray-700 border-gray-300">
                       {difficulty}
                     </Badge>
                   )}
-                  <Badge variant="outline" className="text-white border-white/20">
+                  <Badge variant="outline" className="text-gray-700 border-gray-300">
                     {percent}%
                   </Badge>
                 </div>
               </div>
 
-              <div className="h-2 w-full rounded bg-white/10 overflow-hidden">
-                <div className="h-2 bg-indigo-500" style={{ width: `${percent}%` }} />
+              <div className="h-2 w-full rounded bg-gray-200 overflow-hidden">
+                <div className="h-2 bg-lime-400" style={{ width: `${percent}%` }} />
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <Button asChild>
+                <Button asChild className="bg-lime-400 hover:bg-lime-500 text-gray-900 font-semibold">
                   <Link href="/quiz">Play Again</Link>
                 </Button>
-                <Button variant="secondary" onClick={submitScore} disabled={submitting}>
+                <Button
+                  variant="secondary"
+                  onClick={submitScore}
+                  disabled={submitting}
+                  className="bg-white/70 hover:bg-white text-gray-900 border border-gray-300"
+                >
                   {submitting ? 'Submitting…' : 'Submit Score'}
                 </Button>
-                <Button asChild variant="ghost" className="text-white">
+                <Button asChild variant="ghost" className="text-gray-900 hover:bg-gray-100">
                   <Link href="/leaderboard">View Leaderboard</Link>
                 </Button>
               </div>
@@ -352,30 +351,30 @@ export default function QuizPage() {
           </Card>
 
           {/* review */}
-          <Card className="bg-white/5 ring-1 ring-white/10">
+          <Card className="bg-white/80 backdrop-blur-sm border border-white/50 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-white">Review</CardTitle>
+              <CardTitle className="text-gray-900">Review</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {items.map((item, i) => {
                 const chosen = selections[i]
                 const isCorrect = chosen === item.q.correct_answer
                 return (
-                  <div key={i} className="rounded-lg p-4 bg-white/5 ring-1 ring-white/10">
+                  <div key={i} className="rounded-lg p-4 bg-gray-50 border border-gray-200">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Badge className="bg-indigo-500">Q{i + 1}</Badge>
-                        <Badge variant="outline" className="text-white border-white/20">
+                        <Badge className="bg-indigo-100 text-indigo-800">Q{i + 1}</Badge>
+                        <Badge variant="outline" className="text-gray-700 border-gray-300">
                           {item.q.difficulty}
                         </Badge>
                       </div>
                       <div className="flex items-center gap-2">
                         {isCorrect ? (
-                          <span className="inline-flex items-center gap-1 text-green-300 text-sm">
+                          <span className="inline-flex items-center gap-1 text-green-600 text-sm font-medium">
                             <CheckCircleIcon className="h-5 w-5" /> Correct
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-red-300 text-sm">
+                          <span className="inline-flex items-center gap-1 text-red-600 text-sm font-medium">
                             <XCircleIcon className="h-5 w-5" /> Incorrect
                           </span>
                         )}
@@ -383,7 +382,7 @@ export default function QuizPage() {
                     </div>
 
                     <h3
-                      className="mt-3 text-white font-semibold"
+                      className="mt-3 text-gray-900 font-semibold"
                       dangerouslySetInnerHTML={{ __html: item.q.question }}
                     />
 
@@ -392,10 +391,10 @@ export default function QuizPage() {
                         const isChosen = chosen === opt
                         const isTheCorrect = opt === item.q.correct_answer
                         let cls =
-                          'rounded-md px-3 py-2 text-sm ring-1 ring-white/10 bg-white/5 text-white'
-                        if (isTheCorrect) cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-green-500/40 bg-green-600/20 text-white'
-                        if (isChosen && !isTheCorrect) cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-red-500/40 bg-red-600/20 text-white'
-                        if (isChosen && isTheCorrect) cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-green-500/40 bg-green-600/20 text-white'
+                          'rounded-md px-3 py-2 text-sm ring-1 ring-gray-200 bg-white text-gray-900'
+                        if (isTheCorrect) cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-green-500 bg-green-100 text-green-800'
+                        if (isChosen && !isTheCorrect) cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-red-500 bg-red-100 text-red-800'
+                        if (isChosen && isTheCorrect) cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-green-500 bg-green-100 text-green-800'
                         return <div key={opt} className={cls} dangerouslySetInnerHTML={{ __html: opt }} />
                       })}
                     </div>
@@ -413,34 +412,34 @@ export default function QuizPage() {
   return (
     <SectionShell>
       <div className="space-y-6">
-        {/* Top bar (stacks on mobile) */}
+        {/* Top bar */}
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="text-sm text-gray-300">
-            Question <span className="font-semibold text-white">{index + 1}</span> / {items.length || AMOUNT}
+          <div className="text-sm text-gray-600">
+            Question <span className="font-semibold text-gray-900">{index + 1}</span> / {items.length || AMOUNT}
           </div>
           <div className="flex items-center gap-2">
-            <Badge className="bg-indigo-500">{catName}</Badge>
+            <Badge className="bg-indigo-100 text-indigo-800">{catName}</Badge>
             {difficulty !== 'any' && (
-              <Badge variant="outline" className="text-white border-white/20">
+              <Badge variant="outline" className="text-gray-700 border-gray-300">
                 {difficulty}
               </Badge>
             )}
-            <div className="w-40 h-2 rounded bg-white/10 overflow-hidden">
-              <div className="h-2 bg-indigo-500 transition-all" style={{ width: `${progressPct}%` }} />
+            <div className="w-40 h-2 rounded bg-gray-200 overflow-hidden">
+              <div className="h-2 bg-lime-400 transition-all" style={{ width: `${progressPct}%` }} />
             </div>
           </div>
         </div>
 
-        {/* Question card (centered on md+, full width on mobile) */}
-        <Card className="bg-white/5 ring-1 ring-white/10">
+        {/* Question card */}
+        <Card className="bg-white/80 backdrop-blur-sm border border-white/50 shadow-lg">
           <CardHeader className="space-y-2">
             <CardTitle
-              className="text-white text-xl"
+              className="text-gray-900 text-xl"
               dangerouslySetInnerHTML={{ __html: current?.q.question || '' }}
             />
           </CardHeader>
 
-        <CardContent className="space-y-3">
+          <CardContent className="space-y-3">
             {current?.options.map((a) => {
               const isSelected = selected === a
               const isCorrect = a === current.q.correct_answer
@@ -448,13 +447,13 @@ export default function QuizPage() {
 
               let classes =
                 'w-full text-left rounded-md px-4 py-3 text-sm font-medium transition ' +
-                'bg-white/5 hover:bg-white/10 ring-1 ring-white/10 text-white'
+                'bg-white hover:bg-gray-50 border border-gray-200 text-gray-900'
               if (showResult && isCorrect) {
                 classes =
-                  'w-full text-left rounded-md px-4 py-3 text-sm font-medium bg-green-600/20 ring-1 ring-green-500/40 text-white'
+                  'w-full text-left rounded-md px-4 py-3 text-sm font-medium bg-green-100 border border-green-500 text-green-800'
               } else if (showResult && isSelected && !isCorrect) {
                 classes =
-                  'w-full text-left rounded-md px-4 py-3 text-sm font-medium bg-red-600/20 ring-1 ring-red-500/40 text-white'
+                  'w-full text-left rounded-md px-4 py-3 text-sm font-medium bg-red-100 border border-red-500 text-red-800'
               }
 
               return (
@@ -472,15 +471,15 @@ export default function QuizPage() {
               <div className="mt-4 flex items-center gap-2 text-sm">
                 {selected === current.q.correct_answer ? (
                   <>
-                    <CheckCircleIcon className="h-5 w-5 text-green-400" />
-                    <span className="text-green-300">Correct!</span>
+                    <CheckCircleIcon className="h-5 w-5 text-green-600" />
+                    <span className="text-green-700 font-medium">Correct!</span>
                   </>
                 ) : (
                   <>
-                    <XCircleIcon className="h-5 w-5 text-red-400" />
-                    <span className="text-red-300">
+                    <XCircleIcon className="h-5 w-5 text-red-600" />
+                    <span className="text-red-700 font-medium">
                       Incorrect. Correct answer:&nbsp;
-                      <span className="text-white" dangerouslySetInnerHTML={{ __html: current.q.correct_answer }} />
+                      <span className="text-gray-900" dangerouslySetInnerHTML={{ __html: current.q.correct_answer }} />
                     </span>
                   </>
                 )}
@@ -488,11 +487,15 @@ export default function QuizPage() {
             )}
 
             <div className="pt-3">
-              <Separator className="bg-white/10" />
+              <Separator className="bg-gray-200" />
             </div>
 
             <div className="flex justify-end">
-              <Button onClick={next} disabled={!selected}>
+              <Button
+                onClick={next}
+                disabled={!selected}
+                className="bg-lime-400 hover:bg-lime-500 text-gray-900 font-semibold"
+              >
                 {index + 1 === items.length ? 'Finish' : 'Next'}
               </Button>
             </div>

@@ -12,38 +12,30 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-// ---- local shell to center & add gradient blobs (same vibe as Hero/Quiz)
+// ---- Updated SectionShell to match HeroSection style ----
 function SectionShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative isolate min-h-screen bg-gray-900">
-      {/* top blob */}
+    <div className="relative isolate min-h-screen">
+      {/* Background gradient (same as HeroSection) */}
       <div
-        aria-hidden="true"
-        className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
-      >
-        <div
-          style={{
-            clipPath:
-              'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
-          }}
-          className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 opacity-20 sm:left-[calc(50%-30rem)] sm:w-[64rem]"
-        />
-      </div>
-      {/* bottom blob */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]"
-      >
-        <div
-          style={{
-            clipPath:
-              'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
-          }}
-          className="relative left-[calc(50%+3rem)] aspect-[1155/678] w-[36rem] -translate-x-1/2 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 opacity-20 sm:left-[calc(50%+36rem)] sm:w-[64rem]"
-        />
-      </div>
+        className="absolute inset-0 -z-10"
+        style={{
+          background: `
+            linear-gradient(
+              to bottom,
+              #89E5F0 0%,
+              #B6EFF6 25%,
+              #CCF3FA 67%,
+              #FAE9FF 100%
+            )
+          `,
+        }}
+      />
 
-      {/* center container */}
+      {/* Optional: subtle wave or blob (optional, but hero uses wave) */}
+      {/* We'll skip blobs for consistency with hero's clean look */}
+
+      {/* Center container */}
       <main className="px-6 lg:px-8 py-10 sm:py-14 md:min-h-screen md:flex md:items-center md:justify-center">
         <div className="w-full max-w-4xl">{children}</div>
       </main>
@@ -63,7 +55,7 @@ export default function LeaderboardPage() {
   const [rows, setRows] = useState<Row[]>([])
   const [loading, setLoading] = useState(false)
   const [limit, setLimit] = useState('20')
-  const [category, setCategory] = useState<string>('') // free text for now (matches your API)
+  const [category, setCategory] = useState<string>('')
   const [difficulty, setDifficulty] = useState<'any' | 'easy' | 'medium' | 'hard'>('any')
   const [name, setName] = useState('')
   const [saving, setSaving] = useState(false)
@@ -124,12 +116,13 @@ export default function LeaderboardPage() {
 
   return (
     <SectionShell>
-      <Card className="bg-white/5 ring-1 ring-white/10">
+      {/* Card with subtle white background + soft shadow (like hero buttons) */}
+      <Card className="bg-white/80 backdrop-blur-sm border border-white/50 shadow-lg">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
             <div>
-              <CardTitle className="text-white">Leaderboard</CardTitle>
-              {subtitle && <p className="mt-1 text-sm text-gray-300">{subtitle}</p>}
+              <CardTitle className="text-gray-900">Leaderboard</CardTitle>
+              {subtitle && <p className="mt-1 text-sm text-gray-600">{subtitle}</p>}
             </div>
 
             {/* nickname */}
@@ -138,9 +131,13 @@ export default function LeaderboardPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Set your nickname"
-                className="w-44 bg-white/5 text-white placeholder:text-gray-400 border-white/10"
+                className="w-44 bg-white/70 text-gray-900 placeholder:text-gray-500 border-gray-300"
               />
-              <Button onClick={saveName} disabled={saving || !name.trim()}>
+              <Button
+                onClick={saveName}
+                disabled={saving || !name.trim()}
+                className="bg-lime-400 hover:bg-lime-500 text-gray-900 font-semibold"
+              >
                 {saving ? 'Saving…' : 'Save'}
               </Button>
             </div>
@@ -151,44 +148,41 @@ export default function LeaderboardPage() {
           {/* filters */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full sm:w-auto">
-              {/* Category (free text) */}
               <div className="flex flex-col gap-2">
-                <label className="text-sm text-gray-300">Category</label>
+                <label className="text-sm text-gray-700">Category</label>
                 <Input
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   placeholder="e.g. 9 or General Knowledge"
-                  className="bg-white/5 text-white placeholder:text-gray-400 border-white/10"
+                  className="bg-white/70 text-gray-900 placeholder:text-gray-500 border-gray-300"
                 />
               </div>
 
-              {/* Difficulty (Select) */}
               <div className="flex flex-col gap-2">
-                <label className="text-sm text-gray-300">Difficulty</label>
+                <label className="text-sm text-gray-700">Difficulty</label>
                 <Select
-                value={difficulty}
-                onValueChange={(v: 'any' | 'easy' | 'medium' | 'hard') => setDifficulty(v)}
+                  value={difficulty}
+                  onValueChange={(v: 'any' | 'easy' | 'medium' | 'hard') => setDifficulty(v)}
                 >
-                <SelectTrigger className="w-full bg-white/5 text-white border-white/10">
+                  <SelectTrigger className="w-full bg-white/70 text-gray-900 border-gray-300">
                     <SelectValue placeholder="Any" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-900 text-white border-white/10">
+                  </SelectTrigger>
+                  <SelectContent className="bg-white text-gray-900 border-gray-300">
                     <SelectItem value="any">Any</SelectItem>
                     <SelectItem value="easy">Easy</SelectItem>
                     <SelectItem value="medium">Medium</SelectItem>
                     <SelectItem value="hard">Hard</SelectItem>
-                </SelectContent>
+                  </SelectContent>
                 </Select>
               </div>
 
-              {/* Limit */}
               <div className="flex flex-col gap-2">
-                <label className="text-sm text-gray-300">Limit</label>
+                <label className="text-sm text-gray-700">Limit</label>
                 <Select value={limit} onValueChange={(v) => setLimit(v)}>
-                  <SelectTrigger className="w-full bg-white/5 text-white border-white/10">
+                  <SelectTrigger className="w-full bg-white/70 text-gray-900 border-gray-300">
                     <SelectValue placeholder="20" />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-900 text-white border-white/10">
+                  <SelectContent className="bg-white text-gray-900 border-gray-300">
                     <SelectItem value="10">10</SelectItem>
                     <SelectItem value="20">20</SelectItem>
                     <SelectItem value="50">50</SelectItem>
@@ -199,43 +193,55 @@ export default function LeaderboardPage() {
             </div>
 
             <div className="flex gap-2">
-              <Button variant="secondary" onClick={load} disabled={loading}>
+              <Button
+                variant="secondary"
+                onClick={load}
+                disabled={loading}
+                className="bg-white/70 hover:bg-white text-gray-900 border border-gray-300"
+              >
                 {loading ? 'Loading…' : 'Apply'}
               </Button>
-              <Button asChild variant="ghost" className="text-white">
+              <Button
+                asChild
+                variant="outline"
+                className="border-gray-800 text-gray-900 hover:bg-gray-100"
+              >
                 <Link href="/quiz">Play Quiz</Link>
               </Button>
             </div>
           </div>
 
-          <Separator className="bg-white/10" />
+          <Separator className="bg-gray-200" />
 
           {/* table */}
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead className="text-white">#</TableHead>
-                  <TableHead className="text-white">Name</TableHead>
-                  <TableHead className="text-white">Points</TableHead>
-                  <TableHead className="text-white">When</TableHead>
-                  <TableHead className="text-white">Tags</TableHead>
+                <TableRow className="border-b border-gray-200">
+                  <TableHead className="text-gray-900 font-medium">#</TableHead>
+                  <TableHead className="text-gray-900 font-medium">Name</TableHead>
+                  <TableHead className="text-gray-900 font-medium">Points</TableHead>
+                  <TableHead className="text-gray-900 font-medium">When</TableHead>
+                  <TableHead className="text-gray-900 font-medium">Tags</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {hasData ? (
                   rows.map((r, i) => (
-                    <TableRow key={`${r.createdAt}-${i}`} className="hover:bg-white/5">
-                      <TableCell className="font-medium text-white">{i + 1}</TableCell>
-                      <TableCell className="text-gray-200">{r.displayName ?? 'Guest'}</TableCell>
-                      <TableCell className="font-semibold text-white">{r.points}</TableCell>
-                      <TableCell className="text-gray-300">
+                    <TableRow
+                      key={`${r.createdAt}-${i}`}
+                      className="hover:bg-gray-50 border-b border-gray-100"
+                    >
+                      <TableCell className="font-medium text-gray-900">{i + 1}</TableCell>
+                      <TableCell className="text-gray-700">{r.displayName ?? 'Guest'}</TableCell>
+                      <TableCell className="font-semibold text-gray-900">{r.points}</TableCell>
+                      <TableCell className="text-gray-600">
                         {new Date(r.createdAt).toLocaleString()}
                       </TableCell>
                       <TableCell className="space-x-1">
-                        {r.category && <Badge className="bg-indigo-500">{r.category}</Badge>}
+                        {r.category && <Badge className="bg-lime-200 text-lime-700">{r.category}</Badge>}
                         {r.difficulty && (
-                          <Badge variant="outline" className="text-white border-white/20">
+                          <Badge variant="outline" className="text-gray-700 border-gray-300">
                             {r.difficulty}
                           </Badge>
                         )}
@@ -244,7 +250,7 @@ export default function LeaderboardPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-gray-300 py-10">
+                    <TableCell colSpan={5} className="text-center text-gray-500 py-10">
                       {loading ? 'Loading…' : 'No results yet.'}
                     </TableCell>
                   </TableRow>
@@ -253,17 +259,24 @@ export default function LeaderboardPage() {
             </Table>
           </div>
 
-          {/* little footer actions */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-gray-400">
-              Showing top <span className="text-white font-medium">{limit}</span>{' '}
+          {/* footer actions */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-4">
+            <p className="text-sm text-gray-600">
+              Showing top <span className="text-gray-900 font-medium">{limit}</span>{' '}
               {category || difficulty !== 'any' ? 'with filters' : 'overall'}.
             </p>
             <div className="flex gap-2">
-              <Button asChild>
+              <Button
+                asChild
+                className="bg-lime-400 hover:bg-lime-500 text-gray-900 font-semibold"
+              >
                 <Link href="/quiz">Play Again</Link>
               </Button>
-              <Button asChild variant="ghost" className="text-white">
+              <Button
+                asChild
+                variant="outline"
+                className="border-gray-800 text-gray-900 hover:bg-gray-100"
+              >
                 <Link href="/">Home</Link>
               </Button>
             </div>

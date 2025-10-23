@@ -39,76 +39,90 @@ const items = [
 
 export default function FeaturesSection() {
   return (
-    <section
-      className="
-        relative isolate
-        bg-emerald-100
-        py-16 sm:py-24
-        px-4 sm:px-6
-        text-gray-900
-        overflow-hidden
-      "
-    >
-      <div className="mx-auto w-full max-w-6xl">
-        {/* grid */}
-        <div className="mt-4 grid grid-cols-1 gap-10 lg:mt-8 lg:grid-cols-2 lg:gap-16 items-start">
-          {/* LEFT — big, minimal copy */}
-          <div className="space-y-10 md:space-y-14">
-            <h3 className="font-[var(--font-pt-mono)] text-[clamp(28px,5vw,44px)] leading-tight tracking-[-0.01em]">
-              <span className="block">Level Up Your Knowledge</span>
-              <span className="block text-gray-700">Fast &amp; Fun</span>
-            </h3>
+    <>
+      {/* Background gradient (same as Hero) */}
+      <div
+        className="relative isolate py-16 sm:py-24 px-4 sm:px-6 overflow-hidden"
+        style={{
+          background: `
+            linear-gradient(
+              to bottom,
+              #89E5F0 0%,
+              #B6EFF6 25%,
+              #CCF3FA 67%,
+              #FAE9FF 100%
+            )
+          `,
+        }}
+      >
+        <div className="mx-auto w-full max-w-6xl">
+          <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16 items-start">
+            {/* LEFT — single strong headline */}
+            <div className="space-y-6">
+              <Badge
+                variant="secondary"
+                className="text-sm bg-white/70 text-gray-900 px-4 py-1.5 shadow-sm"
+              >
+                Kenapa LearnChamp?
+              </Badge>
 
-            <h3 className="font-[var(--font-pt-mono)] text-[clamp(28px,5vw,44px)] leading-tight tracking-[-0.01em]">
-              <span className="block">Stop Memorizing</span>
-              <span className="block text-gray-700">Start Mastering</span>
-            </h3>
-          </div>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-normal tracking-tight text-gray-900 max-w-2xl">
+                Level Up Your Knowledge <br />
+                <span className="text-gray-700">Fast &amp; Fun</span>
+              </h2>
 
-          {/* RIGHT — minimalist accordion */}
-          <div className="w-full">
-            <Accordion
-              type="single"
-              collapsible
-              defaultValue="i1"
-              className="space-y-3"
-            >
-              {items.map((it) => (
-                <AccordionItem
-                  key={it.id}
-                  value={it.id}
-                  className="
-                    rounded-xl bg-white/80
-                    ring-1 ring-black/5
-                    backdrop-blur-sm
-                    transition
-                    data-[state=open]:ring-emerald-300/50
-                    focus-within:ring-emerald-300/60
-                  "
-                >
-                  <AccordionTrigger
+              <p className="text-gray-700 max-w-xl">
+                Belajar jadi lebih menarik dengan kuis interaktif yang dirancang untuk menguji pemahaman—bukan sekadar menghafal.
+              </p>
+            </div>
+
+            {/* RIGHT — accordion */}
+            <div className="w-full">
+              <Accordion
+                type="single"
+                collapsible
+                defaultValue="i1"
+                className="space-y-3"
+              >
+                {items.map((it) => (
+                  <AccordionItem
+                    key={it.id}
+                    value={it.id}
                     className="
-                      px-4 py-3 text-left text-[15px] sm:text-base font-semibold
-                      hover:no-underline hover:bg-white
-                      rounded-xl
-                      focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/60 focus-visible:ring-offset-0
-                      data-[state=open]:[&>svg]:rotate-180
+                      rounded-xl bg-white/80
+                      border border-white/50
+                      backdrop-blur-sm
+                      shadow-sm
+                      transition
+                      data-[state=open]:border-lime-400/50
+                      focus-within:border-lime-400/60
                     "
                   >
-                    {it.title}
-                  </AccordionTrigger>
+                    <AccordionTrigger
+                      className="
+                        px-4 py-3 text-left text-[15px] sm:text-base font-semibold text-gray-900
+                        hover:no-underline hover:bg-white/90
+                        rounded-xl
+                        focus:outline-none focus-visible:ring-2 focus-visible:ring-lime-400/50 focus-visible:ring-offset-0
+                        data-[state=open]:[&>svg]:rotate-180
+                      "
+                    >
+                      {it.title}
+                    </AccordionTrigger>
 
-                  <AccordionContent
-                    className="px-4 pt-0 pb-4 text-sm sm:text-[15px] leading-relaxed text-gray-700"
-                  >
-                    {it.desc}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+                    <AccordionContent
+                      className="px-4 pt-0 pb-4 text-sm sm:text-[15px] leading-relaxed text-gray-700"
+                    >
+                      {it.desc}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </div>
           </div>
         </div>
       </div>
-    </section>
+
+    </>
   )
 }

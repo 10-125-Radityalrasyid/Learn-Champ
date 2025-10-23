@@ -4,12 +4,13 @@
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { TrophyIcon, PlayCircleIcon } from '@heroicons/react/24/outline'
+import { TrophyIcon } from '@heroicons/react/24/outline'
+import { PlayCircle } from 'lucide-react'
 
 export default function HeroSection() {
   return (
     <div className="relative isolate overflow-hidden">
-      {/* Background */}
+      {/* Background — identical to FeatureSection */}
       <div
         className="absolute inset-0 -z-10"
         style={{
@@ -31,7 +32,7 @@ export default function HeroSection() {
           variant="secondary"
           className="text-sm bg-white/70 text-gray-900 px-4 py-1.5 shadow-sm"
         >
-          Selamat datang di LEARN CHAMPX
+          Selamat datang di LEARN CHAMP
         </Badge>
 
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-normal tracking-tight text-gray-900 max-w-4xl mt-5">
@@ -63,14 +64,14 @@ export default function HeroSection() {
             aria-label="Start a quiz"
           >
             <Link href="/quiz">
-              <PlayCircleIcon aria-hidden className="h-5 w-5 mr-1 transition-transform group-hover:scale-110" />
+              <PlayCircle aria-hidden className="h-5 w-5 mr-1 transition-transform group-hover:scale-110" />
               Mulai Kuis
             </Link>
           </Button>
         </div>
       </section>
 
-      {/* Wave Separator */}
+      {/* Wave Separator — identical to FeatureSection */}
       <div className="w-full overflow-hidden leading-[0]">
         <svg
           className="block w-full h-16 sm:h-20 md:h-24 lg:h-28"
