@@ -31,7 +31,7 @@ export default function HeroSection() {
           variant="secondary"
           className="text-sm bg-white/70 text-gray-900 px-4 py-1.5 shadow-sm"
         >
-          Selamat datang di LEARN CHAMP
+          Selamat datang di LEARN CHAMPX
         </Badge>
 
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-normal tracking-tight text-gray-900 max-w-4xl mt-5">
