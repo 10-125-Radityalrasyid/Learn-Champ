@@ -5,13 +5,13 @@
 
 ```bash
 Anggota Kelompok:
-Raditya Alrasyid Nugroho     123140125
-Atika Adelia                 123140173
-Ahmad Mulia Saputra          123140190
 Eka Putri Azhari Ritonga     123140028
+Zahwa Natasya Hamzah         123140069
 Bayu Brigas Novaldi          123140072
 Yonatanoel Petra Hutabarat   123140100
+Raditya Alrasyid Nugroho     123140125
 Choirunnisa Syawaldina       123140136
-Zahwa Natasya Hamzah         123140069
+Ahmad Mulia Saputra          123140168
+Atika Adelia                 123140173
 ```
 ---
