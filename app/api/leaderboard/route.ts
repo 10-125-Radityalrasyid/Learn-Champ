@@ -16,7 +16,6 @@ export async function GET(req: Request) {
   const category = url.searchParams.get('category') || undefined
   const difficulty = url.searchParams.get('difficulty') || undefined
 
-  // ✅ type-safe filter
   const where: Prisma.ScoreWhereInput = {}
   if (category) where.category = category
   if (difficulty) where.difficulty = difficulty
