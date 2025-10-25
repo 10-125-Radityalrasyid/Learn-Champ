@@ -1,0 +1,44 @@
+/* === Tailwind v4 Syntax === */
+@import "tailwindcss";
+
+/* Tambahkan utilitas custom */
+@layer utilities {
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-in-out;
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+/* === Variabel warna & tema === */
+:root {
+  --radius: 0.625rem;
+  --card: oklch(1 0 0);
+  --primary: oklch(0.208 0.042 265.755);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.129 0.042 264.695);
+}
+
+/* === Mode Gelap === */
+.dark {
+  --background: oklch(0.129 0.042 264.695);
+  --foreground: oklch(0.984 0.003 247.858);
+}
+
+/* === Styling dasar global (versi aman tanpa border-border) === */
+@layer base {
+  * {
+    @apply border-none outline-none;
+  }
+
+  body {
+    @apply bg-white text-black;
+  }
+}
