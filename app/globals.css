@@ -1,26 +1,44 @@
+/* === Tailwind v4 Syntax === */
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Tambahkan utilitas custom */
+@layer utilities {
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-in-out;
+  }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* === Variabel warna & tema === */
+:root {
+  --radius: 0.625rem;
+  --card: oklch(1 0 0);
+  --primary: oklch(0.208 0.042 265.755);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.129 0.042 264.695);
+}
+
+/* === Mode Gelap === */
+.dark {
+  --background: oklch(0.129 0.042 264.695);
+  --foreground: oklch(0.984 0.003 247.858);
+}
+
+/* === Styling dasar global (versi aman tanpa border-border) === */
+@layer base {
+  * {
+    @apply border-none outline-none;
+  }
+
+  body {
+    @apply bg-white text-black;
+  }
 }
