@@ -10,6 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
+import confetti from 'canvas-confetti'
+import { motion } from 'framer-motion'
 
 type OTDBQuestion = {
   category: string
@@ -32,7 +34,8 @@ type OTDBRawQuestion = {
 type QuizPhase = 'setup' | 'loading' | 'playing' | 'finished' | 'error'
 type Category = { id: number; name: string }
 
-const AMOUNT = 5
+const QUESTION_AMOUNTS = [5, 10, 15]
+const MAX_POINTS = 500
 type Diff = 'easy' | 'medium' | 'hard'
 
 type QItem = {
@@ -40,25 +43,37 @@ type QItem = {
   options: string[] // shuffled once so review shows same order
 }
 
+// 🎨 Tema Warna Berdasarkan Kategori
+const getCategoryTheme = (categoryName: string) => {
+  const cat = categoryName.toLowerCase()
+  if (cat.includes('science') || cat.includes('math') || cat.includes('computer')) {
+    return { border: 'border-blue-300', bg: 'bg-blue-50', badge: 'bg-blue-100 text-blue-800' }
+  }
+  if (cat.includes('history') || cat.includes('politics')) {
+    return { border: 'border-amber-300', bg: 'bg-amber-50', badge: 'bg-amber-100 text-amber-800' }
+  }
+  if (cat.includes('geography') || cat.includes('animals') || cat.includes('vehicles')) {
+    return { border: 'border-emerald-300', bg: 'bg-emerald-50', badge: 'bg-emerald-100 text-emerald-800' }
+  }
+  if (cat.includes('art') || cat.includes('celebrities') || cat.includes('entertainment')) {
+    return { border: 'border-purple-300', bg: 'bg-purple-50', badge: 'bg-purple-100 text-purple-800' }
+  }
+  if (cat.includes('sports') || cat.includes('mythology')) {
+    return { border: 'border-orange-300', bg: 'bg-orange-50', badge: 'bg-orange-100 text-orange-800' }
+  }
+  if (cat.includes('general')) {
+    return { border: 'border-lime-300', bg: 'bg-lime-50', badge: 'bg-lime-100 text-lime-800' }
+  }
+  // Default
+  return { border: 'border-indigo-300', bg: 'bg-indigo-50', badge: 'bg-indigo-100 text-indigo-800' }
+}
+
 /* ---------------- Updated Shell: Hero-style gradient background ---------------- */
 function SectionShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative isolate min-h-screen">
       {/* Background gradient (same as HeroSection) */}
-      <div
-        className="absolute inset-0 -z-10"
-        style={{
-          background: `
-            linear-gradient(
-              to bottom,
-              #89E5F0 0%,
-              #B6EFF6 25%,
-              #CCF3FA 67%,
-              #FAE9FF 100%
-            )
-          `,
-        }}
-      />
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_bottom,_#89E5F0_0%,_#B6EFF6_25%,_#CCF3FA_67%,_#FAE9FF_100%)]" />
 
       {/* Center container */}
       <main className="px-6 lg:px-8 py-10 sm:py-14 md:min-h-screen md:flex md:items-center md:justify-center">
@@ -76,14 +91,20 @@ export default function QuizPage() {
   const [catId, setCatId] = useState<number | 'any'>('any')
   const [catName, setCatName] = useState<string | 'Any Category'>('Any Category')
   const [difficulty, setDifficulty] = useState<Diff | 'any'>('any')
+  const [amount, setAmount] = useState<number>(QUESTION_AMOUNTS[0])
 
   // quiz state
   const [items, setItems] = useState<QItem[]>([])
   const [index, setIndex] = useState(0)
   const [selected, setSelected] = useState<string | null>(null)
-  const [selections, setSelections] = useState<(string | null)[]>(Array(AMOUNT).fill(null))
+  const [selections, setSelections] = useState<(string | null)[]>(
+    Array(QUESTION_AMOUNTS[0]).fill(null)
+  )
   const [score, setScore] = useState(0)
   const [submitting, setSubmitting] = useState(false)
+
+  // ⏱️ Timer state
+  const [timeLeft, setTimeLeft] = useState(15)
 
   // load categories on setup
   useEffect(() => {
@@ -101,11 +122,42 @@ export default function QuizPage() {
     loadCats()
   }, [phase])
 
+  useEffect(() => {
+    if (phase === 'setup') {
+      setSelections(Array(amount).fill(null))
+      setSelected(null)
+      setScore(0)
+    }
+  }, [amount, phase])
+
+  // ⏱️ Timer effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null
+
+    if (phase === 'playing' && selected === null) {
+      setTimeLeft(15)
+      interval = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            if (interval) clearInterval(interval)
+            next()
+            return 15
+          }
+          return prev - 1
+        })
+      }, 1000)
+    }
+
+    return () => {
+      if (interval) clearInterval(interval)
+    }
+  }, [phase, index, selected])
+
   async function startQuiz() {
     try {
       setPhase('loading')
       const params = new URLSearchParams()
-      params.set('amount', String(AMOUNT))
+      params.set('amount', String(amount))
       params.set('type', 'multiple')
       if (catId !== 'any') params.set('category', String(catId))
       if (difficulty !== 'any') params.set('difficulty', difficulty)
@@ -132,7 +184,11 @@ export default function QuizPage() {
   }
 
   const current = items[index]
+  const totalQuestions = items.length || amount || QUESTION_AMOUNTS[0]
   const progressPct = items.length ? (index / items.length) * 100 : 0
+
+  // 🎨 Ambil tema berdasarkan kategori saat ini
+  const currentTheme = phase === 'playing' ? getCategoryTheme(catName) : getCategoryTheme('general')
 
   function onSelectAnswer(a: string) {
     if (selected) return
@@ -142,7 +198,16 @@ export default function QuizPage() {
       next[index] = a
       return next
     })
-    if (a === current.q.correct_answer) setScore((s) => s + 1)
+    if (a === current.q.correct_answer) {
+      setScore((s) => s + 1)
+      // ✨ Confetti saat benar
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#89E5F0', '#B6EFF6', '#CCF3FA', '#A8E6CF', '#D1FAE5']
+      })
+    }
   }
 
   function next() {
@@ -157,7 +222,10 @@ export default function QuizPage() {
   async function submitScore() {
     try {
       setSubmitting(true)
-      const points = score * 100
+      const totalQuestions = items.length || amount || QUESTION_AMOUNTS[0]
+      const points = totalQuestions
+        ? Math.round((score / totalQuestions) * MAX_POINTS)
+        : 0
       const r = await fetch('/api/leaderboard', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -194,7 +262,7 @@ export default function QuizPage() {
             <CardTitle className="text-gray-900">Start a Quiz</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Category */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
@@ -241,6 +309,28 @@ export default function QuizPage() {
                     <SelectItem value="easy">Easy</SelectItem>
                     <SelectItem value="medium">Medium</SelectItem>
                     <SelectItem value="hard">Hard</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Amount */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Number of Questions
+                </label>
+                <Select
+                  value={String(amount)}
+                  onValueChange={(val: `${number}`) => setAmount(Number(val))}
+                >
+                  <SelectTrigger className="w-full bg-white/70 text-gray-900 border-gray-300">
+                    <SelectValue placeholder={String(QUESTION_AMOUNTS[0])} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white text-gray-900 border-gray-300">
+                    {QUESTION_AMOUNTS.map((amt) => (
+                      <SelectItem key={amt} value={String(amt)}>
+                        {amt} Questions
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -300,7 +390,8 @@ export default function QuizPage() {
   }
 
   if (phase === 'finished') {
-    const percent = Math.round((score / items.length) * 100)
+    const totalQuestions = items.length || amount || QUESTION_AMOUNTS[0]
+    const percent = totalQuestions ? Math.round((score / totalQuestions) * 100) : 0
     return (
       <SectionShell>
         <div className="space-y-6">
@@ -315,7 +406,7 @@ export default function QuizPage() {
                   {score} / {items.length} correct
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge className="bg-indigo-100 text-indigo-800">{catName}</Badge>
+                  <Badge className={currentTheme.badge}>{catName}</Badge>
                   {difficulty !== 'any' && (
                     <Badge variant="outline" className="text-gray-700 border-gray-300">
                       {difficulty}
@@ -391,7 +482,8 @@ export default function QuizPage() {
                         const isChosen = chosen === opt
                         const isTheCorrect = opt === item.q.correct_answer
                         let cls =
-                          'rounded-md px-3 py-2 text-sm ring-1 ring-gray-200 bg-white text-gray-900'
+                          'rounded-md px-3 py-2 text-sm ring-1 ring-gray-200 bg-white text-gray-900' +
+                          'transform hover:scale-[1.02] hover:shadow-md'
                         if (isTheCorrect) cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-green-500 bg-green-100 text-green-800'
                         if (isChosen && !isTheCorrect) cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-red-500 bg-red-100 text-red-800'
                         if (isChosen && isTheCorrect) cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-green-500 bg-green-100 text-green-800'
@@ -412,13 +504,31 @@ export default function QuizPage() {
   return (
     <SectionShell>
       <div className="space-y-6">
+        {/* ⏱️ Timer visual bar */}
+        <div className="w-full h-2 rounded bg-gray-200 overflow-hidden">
+          <div
+            className="h-2 bg-lime-400 transition-all duration-1000 ease-linear"
+            style={{ width: `${(timeLeft / 15) * 100}%` }}
+          />
+        </div>
+        {/* ⏱️ Timer counter with color feedback */}
+        <div className="text-center text-lg font-bold mt-1">
+          {timeLeft > 5 ? (
+            <span className="text-green-600">{timeLeft}</span>
+          ) : timeLeft > 2 ? (
+            <span className="text-yellow-600">{timeLeft}</span>
+          ) : (
+            <span className="text-red-600 animate-pulse">{timeLeft}</span>
+          )}
+        </div>
+
         {/* Top bar */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-sm text-gray-600">
-            Question <span className="font-semibold text-gray-900">{index + 1}</span> / {items.length || AMOUNT}
+            Question <span className="font-semibold text-gray-900">{index + 1}</span> / {totalQuestions}
           </div>
           <div className="flex items-center gap-2">
-            <Badge className="bg-indigo-100 text-indigo-800">{catName}</Badge>
+            <Badge className={currentTheme.badge}>{catName}</Badge>
             {difficulty !== 'any' && (
               <Badge variant="outline" className="text-gray-700 border-gray-300">
                 {difficulty}
@@ -430,77 +540,102 @@ export default function QuizPage() {
           </div>
         </div>
 
-        {/* Question card */}
-        <Card className="bg-white/80 backdrop-blur-sm border border-white/50 shadow-lg">
-          <CardHeader className="space-y-2">
-            <CardTitle
-              className="text-gray-900 text-xl"
-              dangerouslySetInnerHTML={{ __html: current?.q.question || '' }}
-            />
-          </CardHeader>
+        {/* Animated Question Card with Feedback Animation */}
+        <motion.div
+          key={`question-${index}-${selected ? (selected === current.q.correct_answer ? 'correct' : 'wrong') : 'idle'}`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{
+            opacity: 1,
+            y: 0,
+            x: selected
+              ? selected === current.q.correct_answer
+                ? [0, -10, 10, -5, 5, 0] // bounce
+                : [0, -8, 8, -8, 8, 0]   // shake
+              : 0,
+          }}
+          transition={{
+            opacity: { duration: 0.3 },
+            y: { duration: 0.3 },
+            x: selected
+              ? selected === current.q.correct_answer
+                ? { duration: 0.6, ease: "easeOut" }
+                : { duration: 0.4, ease: "easeInOut" }
+              : { duration: 0 },
+          }}
+        >
+          <Card className={`bg-white/80 backdrop-blur-sm border ${currentTheme.border} shadow-lg`}>
+            <CardHeader className="space-y-2">
+              <CardTitle
+                className="text-gray-900 text-xl"
+                dangerouslySetInnerHTML={{ __html: current?.q.question || '' }}
+              />
+            </CardHeader>
 
-          <CardContent className="space-y-3">
-            {current?.options.map((a) => {
-              const isSelected = selected === a
-              const isCorrect = a === current.q.correct_answer
-              const showResult = selected !== null
+            <CardContent className="space-y-3">
+              {current?.options.map((a) => {
+                const isSelected = selected === a
+                const isCorrect = a === current.q.correct_answer
+                const showResult = selected !== null
 
-              let classes =
-                'w-full text-left rounded-md px-4 py-3 text-sm font-medium transition ' +
-                'bg-white hover:bg-gray-50 border border-gray-200 text-gray-900'
-              if (showResult && isCorrect) {
-                classes =
-                  'w-full text-left rounded-md px-4 py-3 text-sm font-medium bg-green-100 border border-green-500 text-green-800'
-              } else if (showResult && isSelected && !isCorrect) {
-                classes =
-                  'w-full text-left rounded-md px-4 py-3 text-sm font-medium bg-red-100 border border-red-500 text-red-800'
-              }
+                let classes =
+                  'w-full text-left rounded-md px-4 py-3 text-sm font-medium transition ' +
+                  'bg-white hover:bg-gray-50 border border-gray-200 text-gray-900'
+                if (showResult && isCorrect) {
+                  classes =
+                    'w-full text-left rounded-md px-4 py-3 text-sm font-medium bg-green-100 border border-green-500 text-green-800'
+                } else if (showResult && isSelected && !isCorrect) {
+                  classes =
+                    'w-full text-left rounded-md px-4 py-3 text-sm font-medium bg-red-100 border border-red-500 text-red-800'
+                }
 
-              return (
-                <button
-                  key={a}
-                  disabled={showResult}
-                  onClick={() => onSelectAnswer(a)}
-                  className={classes}
-                  dangerouslySetInnerHTML={{ __html: a }}
-                />
-              )
-            })}
+                return (
+                  <button
+                    title={a.replace(/<\/?[^>]+(>|$)/g, '')}
+                    aria-label={a.replace(/<\/?[^>]+(>|$)/g, '')}
+                    key={a}
+                    disabled={showResult}
+                    onClick={() => onSelectAnswer(a)}
+                    className={classes}
+                    dangerouslySetInnerHTML={{ __html: a }}
+                  />
+                )
+              })}
 
-            {selected && (
-              <div className="mt-4 flex items-center gap-2 text-sm">
-                {selected === current.q.correct_answer ? (
-                  <>
-                    <CheckCircleIcon className="h-5 w-5 text-green-600" />
-                    <span className="text-green-700 font-medium">Correct!</span>
-                  </>
-                ) : (
-                  <>
-                    <XCircleIcon className="h-5 w-5 text-red-600" />
-                    <span className="text-red-700 font-medium">
-                      Incorrect. Correct answer:&nbsp;
-                      <span className="text-gray-900" dangerouslySetInnerHTML={{ __html: current.q.correct_answer }} />
-                    </span>
-                  </>
-                )}
+              {selected && (
+                <div className="mt-4 flex items-center gap-2 text-sm">
+                  {selected === current.q.correct_answer ? (
+                    <>
+                      <CheckCircleIcon className="h-5 w-5 text-green-600" />
+                      <span className="text-green-700 font-medium">Correct!</span>
+                    </>
+                  ) : (
+                    <>
+                      <XCircleIcon className="h-5 w-5 text-red-600" />
+                      <span className="text-red-700 font-medium">
+                        Incorrect. Correct answer:&nbsp;
+                        <span className="text-gray-900" dangerouslySetInnerHTML={{ __html: current.q.correct_answer }} />
+                      </span>
+                    </>
+                  )}
+                </div>
+              )}
+
+              <div className="pt-3">
+                <Separator className="bg-gray-200" />
               </div>
-            )}
 
-            <div className="pt-3">
-              <Separator className="bg-gray-200" />
-            </div>
-
-            <div className="flex justify-end">
-              <Button
-                onClick={next}
-                disabled={!selected}
-                className="bg-lime-400 hover:bg-lime-500 text-gray-900 font-semibold"
-              >
-                {index + 1 === items.length ? 'Finish' : 'Next'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+              <div className="flex justify-end">
+                <Button
+                  onClick={next}
+                  disabled={!selected}
+                  className="bg-lime-400 hover:bg-lime-500 text-gray-900 font-semibold"
+                >
+                  {index + 1 === items.length ? 'Finish' : 'Next'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
     </SectionShell>
   )

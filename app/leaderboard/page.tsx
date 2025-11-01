@@ -1,7 +1,7 @@
 // src/app/leaderboard/page.tsx
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useSession } from 'next-auth/react'
 
 // ---- Updated SectionShell to match HeroSection style ----
 function SectionShell({ children }: { children: React.ReactNode }) {
@@ -18,18 +19,7 @@ function SectionShell({ children }: { children: React.ReactNode }) {
     <div className="relative isolate min-h-screen">
       {/* Background gradient (same as HeroSection) */}
       <div
-        className="absolute inset-0 -z-10"
-        style={{
-          background: `
-            linear-gradient(
-              to bottom,
-              #89E5F0 0%,
-              #B6EFF6 25%,
-              #CCF3FA 67%,
-              #FAE9FF 100%
-            )
-          `,
-        }}
+        className="absolute inset-0 -z-10 bg-[linear-gradient(to_bottom,_#89E5F0_0%,_#B6EFF6_25%,_#CCF3FA_67%,_#FAE9FF_100%)]"
       />
 
       {/* Optional: subtle wave or blob (optional, but hero uses wave) */}
@@ -59,6 +49,8 @@ export default function LeaderboardPage() {
   const [difficulty, setDifficulty] = useState<'any' | 'easy' | 'medium' | 'hard'>('any')
   const [name, setName] = useState('')
   const [saving, setSaving] = useState(false)
+  const { data: session } = useSession()
+  const hasPrefilledName = useRef(false)
 
   async function load() {
     try {
@@ -81,6 +73,13 @@ export default function LeaderboardPage() {
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    if (!hasPrefilledName.current && session?.user?.name) {
+      setName(session.user.name)
+      hasPrefilledName.current = true
+    }
+  }, [session?.user?.name])
 
   async function saveName() {
     if (!name.trim()) return
@@ -123,6 +122,11 @@ export default function LeaderboardPage() {
             <div>
               <CardTitle className="text-gray-900">Leaderboard</CardTitle>
               {subtitle && <p className="mt-1 text-sm text-gray-600">{subtitle}</p>}
+              {session?.user?.name && (
+                <p className="mt-1 text-xs text-gray-500">
+                  Masuk sebagai <span className="font-semibold text-gray-800">{session.user.name}</span>
+                </p>
+              )}
             </div>
 
             {/* nickname */}

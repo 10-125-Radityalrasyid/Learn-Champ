@@ -1,4 +1,3 @@
-// components/feature-section.tsx
 'use client'
 
 import {
@@ -42,22 +41,16 @@ export default function FeaturesSection() {
     <>
       {/* Background gradient (same as Hero) */}
       <div
-        className="relative isolate py-16 sm:py-24 px-4 sm:px-6 overflow-hidden"
-        style={{
-          background: `
-            linear-gradient(
-              to bottom,
-              #89E5F0 0%,
-              #B6EFF6 25%,
-              #CCF3FA 67%,
-              #FAE9FF 100%
-            )
-          `,
-        }}
+        className="
+        relative isolate 
+        py-16 sm:py-24 px-4 sm:px-6 
+        overflow-hidden
+          bg-[linear-gradient(to_bottom,_#D1FAE5_0%,_#B6EFF6_25%,_#CCF3FA_70%,_#EAF5FB_100%)]
+        "
       >
         <div className="mx-auto w-full max-w-6xl">
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16 items-start">
-            {/* LEFT — single strong headline */}
+            {/* LEFT — headline */}
             <div className="space-y-6">
               <Badge
                 variant="secondary"
@@ -122,7 +115,6 @@ export default function FeaturesSection() {
           </div>
         </div>
       </div>
-
     </>
   )
 }

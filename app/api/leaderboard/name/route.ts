@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { NameSchema } from '@/lib/validation'
+import { Prisma } from '@prisma/client'
+import { auth } from '@/auth'
 
 function readCookie(req: Request, key: string) {
   const cookie = req.headers.get('cookie') || ''
@@ -8,9 +10,11 @@ function readCookie(req: Request, key: string) {
 }
 
 export async function POST(req: Request) {
+  const session = await auth()
   const guestId = readCookie(req, 'guestId')
-  if (!guestId) {
-    return NextResponse.json({ error: 'No guestId' }, { status: 401 })
+  const userId = session?.user?.id
+  if (!guestId && !userId) {
+    return NextResponse.json({ error: 'No identity' }, { status: 401 })
   }
 
   const body = await req.json().catch(() => ({}))
@@ -19,8 +23,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
   }
 
+  const where: Prisma.ScoreWhereInput = {
+    OR: [
+      ...(guestId ? [{ guestId }] : []),
+      ...(userId ? [{ userId }] : []),
+    ],
+  }
+
+  if (!where.OR?.length) {
+    return NextResponse.json({ error: 'No identity' }, { status: 401 })
+  }
+
   await prisma.score.updateMany({
-    where: { guestId },
+    where,
     data: { displayName: parsed.data.displayName.trim() || null },
   })
 

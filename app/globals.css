@@ -1,3 +1,14 @@
+@font-face {
+  font-family: 'DK Jamboo';
+  src: url('/fonts/DKJamboo.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.dk-jamboo {
+  font-family: 'DK Jamboo', sans-serif;
+}
+
 @import "tailwindcss";
 @import "tw-animate-css";
 

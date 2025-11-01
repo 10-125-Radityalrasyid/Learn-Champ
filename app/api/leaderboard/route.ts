@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import type { Prisma } from '@prisma/client'           // ✅ add this
 import { ScorePostSchema } from '@/lib/validation'
 import { createHash } from 'crypto'
+import { auth } from '@/auth'
 
 function readCookie(req: Request, key: string) {
   const cookie = req.headers.get('cookie') || ''
@@ -37,8 +38,12 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const session = await auth()
+  const userId = session?.user?.id ?? null
   const guestId = readCookie(req, 'guestId')
-  if (!guestId) return NextResponse.json({ error: 'No guestId' }, { status: 401 })
+  if (!guestId && !userId) {
+    return NextResponse.json({ error: 'No identity' }, { status: 401 })
+  }
 
   const json = await req.json().catch(() => ({}))
   const parsed = ScorePostSchema.safeParse(json)
@@ -57,15 +62,40 @@ export async function POST(req: Request) {
   const userAgent = req.headers.get('user-agent') || undefined
   const { points, category, difficulty } = parsed.data
 
+  const identityWhere: Prisma.ScoreWhereInput = {
+    category,
+    difficulty,
+  }
+  if (userId) {
+    identityWhere.userId = userId
+  } else if (guestId) {
+    identityWhere.guestId = guestId
+  }
+
   const bestExisting = await prisma.score.findFirst({
-    where: { guestId, category, difficulty },
+    where: identityWhere,
     orderBy: { points: 'desc' },
     select: { points: true },
   })
 
   if (!bestExisting || points > bestExisting.points) {
     await prisma.score.create({
-      data: { guestId, points, category, difficulty, ipHash, userAgent },
+      data: {
+        guestId: guestId ?? null,
+        points,
+        category,
+        difficulty,
+        ipHash,
+        userAgent,
+        displayName: session?.user?.name ?? null,
+        ...(userId
+          ? {
+              user: {
+                connect: { id: userId },
+              },
+            }
+          : {}),
+      },
     })
   }
 
