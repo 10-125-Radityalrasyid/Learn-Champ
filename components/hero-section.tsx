@@ -36,7 +36,7 @@ export default function HeroSection() {
         </Badge>
 
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-normal tracking-tight text-gray-900 max-w-4xl mt-5">
-          Uji Pengetahuanmu <br /> Kuasai Peringkat Teratas
+        Test Your Knowledge<br /> Kuasai Peringkat Teratas
         </h1>
 
         <p className="mt-5 sm:mt-6 text-gray-700 max-w-2xl mx-auto px-1">
