@@ -1,9 +1,8 @@
-// src/app/layout.tsx
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import '@/app/globals.css'
-import ClientNavbarWrapper from '@/components/client-navbar-wrapper' // ✅ Ganti ini
+import ClientNavbarWrapper from '@/components/client-navbar-wrapper' 
 import { SessionProvider } from '@/components/providers/session-provider'
 import { auth } from '@/auth'
 
@@ -33,7 +32,7 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} h-full bg-gradient-to-b from-[#8EE5F0] to-[#B6EFF6] antialiased`}
       >
         <SessionProvider session={session}>
-          <ClientNavbarWrapper /> {/* ✅ Gunakan wrapper */}
+          <ClientNavbarWrapper />
           {children}
           <Toaster
             theme="dark"

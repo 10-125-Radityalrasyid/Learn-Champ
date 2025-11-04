@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react' // 👈 1. Import useCallback
+import { useEffect, useState, useCallback } from 'react' 
 import Link from 'next/link'
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid'
 import { Badge } from '@/components/ui/badge'
@@ -25,22 +25,22 @@ import confetti from 'canvas-confetti'
 import { motion } from 'framer-motion'
 
 import {
-  FlaskConical, // Science
-  Landmark,    // History, Politics
-  Globe,       // Geography, General
-  Film,        // Entertainment, Film
-  Music,       // Music
-  Book,        // Books
-  Tv,          // Television
-  Gamepad2,    // Video Games
-  Palette,     // Art
-  Car,         // Vehicles
-  Cat,         // Animals
-  Trophy,      // Sports
-  Brain,       // General Knowledge
-  Code,        // Computers
-  Sigma,       // Math
-  Award,       // Default
+  FlaskConical, 
+  Landmark,    
+  Globe,       
+  Film,        
+  Music,       
+  Book,        
+  Tv,          
+  Gamepad2,    
+  Palette,     
+  Car,         
+  Cat,         
+  Trophy,      
+  Brain,       
+  Code,        
+  Sigma,       
+  Award,       
 } from 'lucide-react'
 
 type OTDBQuestion = {
@@ -65,7 +65,7 @@ type QuizPhase = 'setup' | 'loading' | 'playing' | 'finished' | 'error'
 type Category = { id: number; name: string }
 
 const QUESTION_AMOUNTS = [5, 10, 15]
-const MAX_POINTS = 500 // Skor maksimum yang akan dikirim ke leaderboard
+const MAX_POINTS = 500 
 type Diff = 'easy' | 'medium' | 'hard'
 
 type QItem = {
@@ -73,7 +73,6 @@ type QItem = {
   options: string[] 
 }
 
-// Helper Tema (Sudah Anda miliki)
 const getCategoryTheme = (categoryName: string) => {
   const cat = categoryName.toLowerCase()
   const defaultTheme = { base: 'bg-indigo-500', hover: 'hover:bg-indigo-600', text: 'text-indigo-900', border: 'border-indigo-300', bg: 'bg-indigo-50', badge: 'bg-indigo-100 text-indigo-800', ring: 'focus:ring-indigo-400' }
@@ -99,7 +98,6 @@ const getCategoryTheme = (categoryName: string) => {
   return defaultTheme
 }
 
-// ... (getCategoryIcon, SectionShell, state, useEffects, helpers... SAMA SEPERTI SEBELUMNYA)
 const getCategoryIcon = (categoryName: string): React.ElementType => {
   const cat = categoryName.toLowerCase();
   if (cat.includes('computer')) return Code;
@@ -147,7 +145,7 @@ export default function QuizPage() {
   const [selections, setSelections] = useState<(string | null)[]>(
     Array(QUESTION_AMOUNTS[0]).fill(null)
   )
-  const [score, setScore] = useState(0) // Ini adalah JUMLAH jawaban benar
+  const [score, setScore] = useState(0) 
   const [displayPoints, setDisplayPoints] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [timeLeft, setTimeLeft] = useState(15)
@@ -178,7 +176,6 @@ export default function QuizPage() {
     }
   }, [amount, phase])
 
-  // 👇 2. FUNGSI 'next' DIBUNGKUS DENGAN useCallback
   const next = useCallback(() => {
     if (index + 1 < items.length) {
       setIndex((i) => i + 1)
@@ -186,10 +183,8 @@ export default function QuizPage() {
     } else {
       setPhase('finished')
     }
-  }, [index, items.length]) // 'next' bergantung pada 'index' dan 'items.length'
+  }, [index, items.length]) 
 
-
-  // ⏱️ Timer effect
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null
 
@@ -199,7 +194,7 @@ export default function QuizPage() {
         setTimeLeft((prev) => {
           if (prev <= 1) {
             if (interval) clearInterval(interval)
-            next() // Sekarang aman untuk memanggil next
+            next() 
             return 15
           }
           return prev - 1
@@ -210,7 +205,7 @@ export default function QuizPage() {
     return () => {
       if (interval) clearInterval(interval)
     }
-  }, [phase, index, selected, next]) // 👈 3. TAMBAHKAN 'next' ke dependency array
+  }, [phase, index, selected, next]) 
 
   async function startQuiz(categoryId: number | 'any', categoryName: string) {
     try {
@@ -280,13 +275,11 @@ export default function QuizPage() {
     }
   }
 
-  // (Fungsi 'next' sekarang sudah dipindah ke atas)
 
   async function submitScore() {
     try {
       setSubmitting(true)
       const totalQuestions = items.length || amount || QUESTION_AMOUNTS[0]
-      // Kalkulasi poin (skor/total) * MAX
       const points = totalQuestions
         ? Math.round((score / totalQuestions) * MAX_POINTS)
         : 0
@@ -321,7 +314,6 @@ export default function QuizPage() {
     setPhase('setup');
   }
 
-  // ... (Fase Setup, Loading, Error... SAMA SEPERTI SEBELUMNYA)
   if (phase === 'setup') {
     return (
       <SectionShell>
@@ -340,7 +332,7 @@ export default function QuizPage() {
                   <SelectValue placeholder="Any" />
                 </SelectTrigger>
                 <SelectContent className="bg-white text-gray-900 border-gray-300">
-                  <SelectItem value="any">Any</SelectItem>
+                  <SelectItem value="any">Random</SelectItem>
                   <SelectItem value="easy">Easy</SelectItem>
                   <SelectItem value="medium">Medium</SelectItem>
                   <SelectItem value="hard">Hard</SelectItem>
@@ -445,7 +437,6 @@ export default function QuizPage() {
   if (phase === 'finished') {
     const totalQuestions = items.length || amount || QUESTION_AMOUNTS[0]
     const percent = totalQuestions ? Math.round((score / totalQuestions) * 100) : 0
-    // Hitung total poin
     const totalPoints = totalQuestions
         ? Math.round((score / totalQuestions) * MAX_POINTS)
         : 0
@@ -460,8 +451,6 @@ export default function QuizPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                
-                {/* Menampilkan Total Poin */}
                 <div className="space-y-1">
                   <div className="text-gray-900 text-2xl font-semibold">
                     {score} / {items.length} correct
@@ -510,7 +499,6 @@ export default function QuizPage() {
             </CardContent>
           </Card>
 
-          {/* ... (Review section tetap sama) ... */}
           <Card className="bg-white/80 backdrop-blur-sm border border-white/50 shadow-lg">
             <CardHeader>
               <CardTitle className="text-gray-900">Review</CardTitle>
@@ -568,7 +556,6 @@ export default function QuizPage() {
     )
   }
 
-  // playing
   return (
     <SectionShell>
       <div className="space-y-4"> 
@@ -721,7 +708,6 @@ export default function QuizPage() {
   )
 }
 
-// ... (Helper CategoryBox, decodeQuestion, shuffle tetap sama)
 function CategoryBox({ name, theme, onClick, icon: IconComponent }: {
   name: string;
   theme: { border: string; bg: string; text: string; ring: string; base: string; hover: string; };
@@ -769,4 +755,3 @@ function shuffle<T>(arr: T[]): T[] {
   }
   return a
 }
-
