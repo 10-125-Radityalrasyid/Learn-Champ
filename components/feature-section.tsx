@@ -11,28 +11,28 @@ import { Badge } from '@/components/ui/badge'
 const items = [
   {
     id: 'i1',
-    title: 'Cara Terbaik untuk Mengukur Kemampuanmu',
-    desc: 'Kuis singkat yang menilai konsep inti—bukan sekadar hafalan—agar kamu tahu posisi dan progresmu.',
+    title: 'The Best Way to Measure Your Ability',
+    desc: 'Short quizzes that assess core concepts—not just memorization—so you know where you stand and how you are progressing.',
   },
   {
     id: 'i2',
-    title: 'Belajar Bukan Lagi Tugas, Tapi Tantangan Seru',
-    desc: 'Umpan balik instan membuat proses belajar terasa seperti gim: cepat, ringan, memuaskan.',
+    title: 'Learning is no longer a chore, but a fun challenge.',
+    desc: 'Instant feedback makes the learning process feel like a game: fast, light, satisfying.',
   },
   {
     id: 'i3',
-    title: 'Tinggalkan Cara Lama, Kuasai Ilmu dengan Cepat',
-    desc: 'Materi ringkas dan relevan; fokus pada pemahaman yang bisa langsung diterapkan.',
+    title: 'Leave the Old Ways, Master Knowledge Quickly',
+    desc: 'Concise and relevant material; focused on understanding that can be applied immediately.',
   },
   {
     id: 'i4',
-    title: 'Uji Pengetahuanmu Tanpa Terikat Waktu dan Tempat',
-    desc: 'Main kapan saja. Skor tersimpan anonim, tanpa akun, tanpa ribet.',
+    title: 'Test Your Knowledge Without Being Bound by Time and Place',
+    desc: 'Play anytime. Scores are saved anonymously, no accounts, no hassle.',
   },
   {
     id: 'i5',
-    title: 'Kuis Berbatas Waktu Melatih Respons Cepat & Akurat',
-    desc: 'Timer singkat melatih fokus, kecepatan, dan ketepatan pengambilan keputusan.',
+    title: 'Time-Limited Quiz Trains Fast & Accurate Response',
+    desc: 'Short timers train focus, speed, and accuracy of decision making.',
   },
 ]
 
@@ -46,6 +46,7 @@ export default function FeaturesSection() {
         py-16 sm:py-24 px-4 sm:px-6 
         overflow-hidden
           bg-[linear-gradient(to_bottom,_#D1FAE5_0%,_#B6EFF6_25%,_#CCF3FA_70%,_#EAF5FB_100%)]
+        font-mono
         "
       >
         <div className="mx-auto w-full max-w-6xl">
@@ -56,7 +57,7 @@ export default function FeaturesSection() {
                 variant="secondary"
                 className="text-sm bg-white/70 text-gray-900 px-4 py-1.5 shadow-sm"
               >
-                Kenapa LearnChamp?
+                💡 THE POWER OF LEARN CHAMP
               </Badge>
 
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-normal tracking-tight text-gray-900 max-w-2xl">
@@ -65,7 +66,7 @@ export default function FeaturesSection() {
               </h2>
 
               <p className="text-gray-700 max-w-xl">
-                Belajar jadi lebih menarik dengan kuis interaktif yang dirancang untuk menguji pemahaman—bukan sekadar menghafal.
+              Learning becomes more interesting with interactive quizzes designed to test understanding—not just memorization.
               </p>
             </div>
 

@@ -1,4 +1,3 @@
-// src/app/leaderboard/page.tsx
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -13,19 +12,39 @@ import { Separator } from '@/components/ui/separator'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useSession } from 'next-auth/react'
 
-// ---- Updated SectionShell to match HeroSection style ----
+const getCategoryTheme = (categoryName: string) => {
+  if (!categoryName) {
+    return { border: 'border-indigo-300', bg: 'bg-indigo-50', badge: 'bg-indigo-100 text-indigo-800' }
+  }
+  const cat = categoryName.toLowerCase()
+  if (cat.includes('science') || cat.includes('math') || cat.includes('computer')) {
+    return { border: 'border-blue-300', bg: 'bg-blue-50', badge: 'bg-blue-100 text-blue-800' }
+  }
+  if (cat.includes('history') || cat.includes('politics')) {
+    return { border: 'border-amber-300', bg: 'bg-amber-50', badge: 'bg-amber-100 text-amber-800' }
+  }
+  if (cat.includes('geography') || cat.includes('animals') || cat.includes('vehicles')) {
+    return { border: 'border-emerald-300', bg: 'bg-emerald-50', badge: 'bg-emerald-100 text-emerald-800' }
+  }
+  if (cat.includes('art') || cat.includes('celebrities') || cat.includes('entertainment')) {
+    return { border: 'border-purple-300', bg: 'bg-purple-50', badge: 'bg-purple-100 text-purple-800' }
+  }
+  if (cat.includes('sports') || cat.includes('mythology')) {
+    return { border: 'border-orange-300', bg: 'bg-orange-50', badge: 'bg-orange-100 text-orange-800' }
+  }
+  if (cat.includes('general')) {
+    return { border: 'border-lime-300', bg: 'bg-lime-50', badge: 'bg-lime-100 text-lime-800' }
+  }
+  // Default
+  return { border: 'border-indigo-300', bg: 'bg-indigo-50', badge: 'bg-indigo-100 text-indigo-800' }
+}
+
 function SectionShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative isolate min-h-screen">
-      {/* Background gradient (same as HeroSection) */}
+    <div className="relative isolate min-h-screen font-mono">
       <div
         className="absolute inset-0 -z-10 bg-[linear-gradient(to_bottom,_#89E5F0_0%,_#B6EFF6_25%,_#CCF3FA_67%,_#FAE9FF_100%)]"
       />
-
-      {/* Optional: subtle wave or blob (optional, but hero uses wave) */}
-      {/* We'll skip blobs for consistency with hero's clean look */}
-
-      {/* Center container */}
       <main className="px-6 lg:px-8 py-10 sm:py-14 md:min-h-screen md:flex md:items-center md:justify-center">
         <div className="w-full max-w-4xl">{children}</div>
       </main>
@@ -115,7 +134,6 @@ export default function LeaderboardPage() {
 
   return (
     <SectionShell>
-      {/* Card with subtle white background + soft shadow (like hero buttons) */}
       <Card className="bg-white/80 backdrop-blur-sm border border-white/50 shadow-lg">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
@@ -124,7 +142,7 @@ export default function LeaderboardPage() {
               {subtitle && <p className="mt-1 text-sm text-gray-600">{subtitle}</p>}
               {session?.user?.name && (
                 <p className="mt-1 text-xs text-gray-500">
-                  Masuk sebagai <span className="font-semibold text-gray-800">{session.user.name}</span>
+                  Log in as <span className="font-semibold text-gray-800">{session.user.name}</span>
                 </p>
               )}
             </div>
@@ -201,14 +219,14 @@ export default function LeaderboardPage() {
                 variant="secondary"
                 onClick={load}
                 disabled={loading}
-                className="bg-white/70 hover:bg-white text-gray-900 border border-gray-300"
+                className="bg-sky-500 hover:bg-sky-600 text-balck font-semibold"
               >
-                {loading ? 'Loading…' : 'Apply'}
+                {loading ? 'Loading…' : 'Filter'}
               </Button>
               <Button
                 asChild
                 variant="outline"
-                className="border-gray-800 text-gray-900 hover:bg-gray-100"
+                className="border-lime-600 text-lime-700 hover:bg-lime-50/50 hover:text-lime-800 font-semibold"
               >
                 <Link href="/quiz">Play Quiz</Link>
               </Button>
@@ -217,16 +235,15 @@ export default function LeaderboardPage() {
 
           <Separator className="bg-gray-200" />
 
-          {/* table */}
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="border-b border-gray-200">
-                  <TableHead className="text-gray-900 font-medium">#</TableHead>
-                  <TableHead className="text-gray-900 font-medium">Name</TableHead>
-                  <TableHead className="text-gray-900 font-medium">Points</TableHead>
-                  <TableHead className="text-gray-900 font-medium">When</TableHead>
-                  <TableHead className="text-gray-900 font-medium">Tags</TableHead>
+                <TableRow className="border-b border-gray-300 bg-white/60 hover:bg-white/60">
+                  <TableHead className="text-gray-900 font-semibold w-12 text-center">#</TableHead>
+                  <TableHead className="text-gray-900 font-semibold">Name</TableHead>
+                  <TableHead className="text-gray-900 font-semibold">Points</TableHead>
+                  <TableHead className="text-gray-900 font-semibold">When</TableHead>
+                  <TableHead className="text-gray-900 font-semibold">Tags</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -234,16 +251,16 @@ export default function LeaderboardPage() {
                   rows.map((r, i) => (
                     <TableRow
                       key={`${r.createdAt}-${i}`}
-                      className="hover:bg-gray-50 border-b border-gray-100"
+                      className="hover:bg-lime-50/50 border-b border-gray-200 odd:bg-white/50 even:bg-sky-50/50"
                     >
-                      <TableCell className="font-medium text-gray-900">{i + 1}</TableCell>
-                      <TableCell className="text-gray-700">{r.displayName ?? 'Guest'}</TableCell>
+                      <TableCell className="font-bold text-lime-600 text-center">{i + 1}</TableCell>
+                      <TableCell className="text-gray-800 font-medium">{r.displayName ?? 'Guest'}</TableCell>
                       <TableCell className="font-semibold text-gray-900">{r.points}</TableCell>
                       <TableCell className="text-gray-600">
                         {new Date(r.createdAt).toLocaleString()}
                       </TableCell>
-                      <TableCell className="space-x-1">
-                        {r.category && <Badge className="bg-lime-200 text-lime-700">{r.category}</Badge>}
+                      <TableCell className="space-x-1 space-y-1">
+                        {r.category && <Badge className={getCategoryTheme(r.category).badge}>{r.category}</Badge>}
                         {r.difficulty && (
                           <Badge variant="outline" className="text-gray-700 border-gray-300">
                             {r.difficulty}
@@ -263,7 +280,6 @@ export default function LeaderboardPage() {
             </Table>
           </div>
 
-          {/* footer actions */}
           <div className="flex flex-wrap items-center justify-between gap-3 pt-4">
             <p className="text-sm text-gray-600">
               Showing top <span className="text-gray-900 font-medium">{limit}</span>{' '}
@@ -279,7 +295,7 @@ export default function LeaderboardPage() {
               <Button
                 asChild
                 variant="outline"
-                className="border-gray-800 text-gray-900 hover:bg-gray-100"
+                className="border-gray-300 text-gray-700 hover:bg-gray-100"
               >
                 <Link href="/">Home</Link>
               </Button>

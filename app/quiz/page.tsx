@@ -1,17 +1,47 @@
-// src/app/quiz/page.tsx
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react' // 👈 1. Import useCallback
 import Link from 'next/link'
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { toast } from 'sonner'
 import confetti from 'canvas-confetti'
 import { motion } from 'framer-motion'
+
+import {
+  FlaskConical, // Science
+  Landmark,    // History, Politics
+  Globe,       // Geography, General
+  Film,        // Entertainment, Film
+  Music,       // Music
+  Book,        // Books
+  Tv,          // Television
+  Gamepad2,    // Video Games
+  Palette,     // Art
+  Car,         // Vehicles
+  Cat,         // Animals
+  Trophy,      // Sports
+  Brain,       // General Knowledge
+  Code,        // Computers
+  Sigma,       // Math
+  Award,       // Default
+} from 'lucide-react'
 
 type OTDBQuestion = {
   category: string
@@ -35,47 +65,69 @@ type QuizPhase = 'setup' | 'loading' | 'playing' | 'finished' | 'error'
 type Category = { id: number; name: string }
 
 const QUESTION_AMOUNTS = [5, 10, 15]
-const MAX_POINTS = 500
+const MAX_POINTS = 500 // Skor maksimum yang akan dikirim ke leaderboard
 type Diff = 'easy' | 'medium' | 'hard'
 
 type QItem = {
   q: OTDBQuestion
-  options: string[] // shuffled once so review shows same order
+  options: string[] 
 }
 
-// 🎨 Tema Warna Berdasarkan Kategori
+// Helper Tema (Sudah Anda miliki)
 const getCategoryTheme = (categoryName: string) => {
   const cat = categoryName.toLowerCase()
+  const defaultTheme = { base: 'bg-indigo-500', hover: 'hover:bg-indigo-600', text: 'text-indigo-900', border: 'border-indigo-300', bg: 'bg-indigo-50', badge: 'bg-indigo-100 text-indigo-800', ring: 'focus:ring-indigo-400' }
+
   if (cat.includes('science') || cat.includes('math') || cat.includes('computer')) {
-    return { border: 'border-blue-300', bg: 'bg-blue-50', badge: 'bg-blue-100 text-blue-800' }
+    return { base: 'bg-blue-500', hover: 'hover:bg-blue-600', text: 'text-blue-900', border: 'border-blue-300', bg: 'bg-blue-50', badge: 'bg-blue-100 text-blue-800', ring: 'focus:ring-blue-400' }
   }
   if (cat.includes('history') || cat.includes('politics')) {
-    return { border: 'border-amber-300', bg: 'bg-amber-50', badge: 'bg-amber-100 text-amber-800' }
+    return { base: 'bg-amber-500', hover: 'hover:bg-amber-600', text: 'text-amber-900', border: 'border-amber-300', bg: 'bg-amber-50', badge: 'bg-amber-100 text-amber-800', ring: 'focus:ring-amber-400' }
   }
   if (cat.includes('geography') || cat.includes('animals') || cat.includes('vehicles')) {
-    return { border: 'border-emerald-300', bg: 'bg-emerald-50', badge: 'bg-emerald-100 text-emerald-800' }
+    return { base: 'bg-emerald-500', hover: 'hover:bg-emerald-600', text: 'text-emerald-900', border: 'border-emerald-300', bg: 'bg-emerald-50', badge: 'bg-emerald-100 text-emerald-800', ring: 'focus:ring-emerald-400' }
   }
   if (cat.includes('art') || cat.includes('celebrities') || cat.includes('entertainment')) {
-    return { border: 'border-purple-300', bg: 'bg-purple-50', badge: 'bg-purple-100 text-purple-800' }
+    return { base: 'bg-purple-500', hover: 'hover:bg-purple-600', text: 'text-purple-900', border: 'border-purple-300', bg: 'bg-purple-50', badge: 'bg-purple-100 text-purple-800', ring: 'focus:ring-purple-400' }
   }
   if (cat.includes('sports') || cat.includes('mythology')) {
-    return { border: 'border-orange-300', bg: 'bg-orange-50', badge: 'bg-orange-100 text-orange-800' }
+    return { base: 'bg-orange-500', hover: 'hover:bg-orange-600', text: 'text-orange-900', border: 'border-orange-300', bg: 'bg-orange-50', badge: 'bg-orange-100 text-orange-800', ring: 'focus:ring-orange-400' }
   }
   if (cat.includes('general')) {
-    return { border: 'border-lime-300', bg: 'bg-lime-50', badge: 'bg-lime-100 text-lime-800' }
+    return { base: 'bg-lime-500', hover: 'hover:bg-lime-600', text: 'text-lime-900', border: 'border-lime-300', bg: 'bg-lime-50', badge: 'bg-lime-100 text-lime-800', ring: 'focus:ring-lime-400' }
   }
-  // Default
-  return { border: 'border-indigo-300', bg: 'bg-indigo-50', badge: 'bg-indigo-100 text-indigo-800' }
+  return defaultTheme
 }
 
-/* ---------------- Updated Shell: Hero-style gradient background ---------------- */
+// ... (getCategoryIcon, SectionShell, state, useEffects, helpers... SAMA SEPERTI SEBELUMNYA)
+const getCategoryIcon = (categoryName: string): React.ElementType => {
+  const cat = categoryName.toLowerCase();
+  if (cat.includes('computer')) return Code;
+  if (cat.includes('math')) return Sigma;
+  if (cat.includes('science')) return FlaskConical;
+  if (cat.includes('history')) return Landmark;
+  if (cat.includes('politics')) return Landmark;
+  if (cat.includes('geography')) return Globe;
+  if (cat.includes('animals')) return Cat;
+  if (cat.includes('vehicles')) return Car;
+  if (cat.includes('film')) return Film;
+  if (cat.includes('music')) return Music;
+  if (cat.includes('television')) return Tv;
+  if (cat.includes('video games')) return Gamepad2;
+  if (cat.includes('books')) return Book;
+  if (cat.includes('entertainment')) return Film;
+  if (cat.includes('art')) return Palette;
+  if (cat.includes('sports')) return Trophy;
+  if (cat.includes('general knowledge')) return Brain;
+  
+  return Award;
+}
+
 function SectionShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative isolate min-h-screen">
-      {/* Background gradient (same as HeroSection) */}
+    <div className="relative isolate min-h-screen font-mono">
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_bottom,_#89E5F0_0%,_#B6EFF6_25%,_#CCF3FA_67%,_#FAE9FF_100%)]" />
 
-      {/* Center container */}
       <main className="px-6 lg:px-8 py-10 sm:py-14 md:min-h-screen md:flex md:items-center md:justify-center">
         <div className="w-full max-w-3xl">{children}</div>
       </main>
@@ -85,28 +137,21 @@ function SectionShell({ children }: { children: React.ReactNode }) {
 
 export default function QuizPage() {
   const [phase, setPhase] = useState<QuizPhase>('setup')
-
-  // setup selections
   const [categories, setCategories] = useState<Category[]>([])
-  const [catId, setCatId] = useState<number | 'any'>('any')
   const [catName, setCatName] = useState<string | 'Any Category'>('Any Category')
   const [difficulty, setDifficulty] = useState<Diff | 'any'>('any')
   const [amount, setAmount] = useState<number>(QUESTION_AMOUNTS[0])
-
-  // quiz state
   const [items, setItems] = useState<QItem[]>([])
   const [index, setIndex] = useState(0)
   const [selected, setSelected] = useState<string | null>(null)
   const [selections, setSelections] = useState<(string | null)[]>(
     Array(QUESTION_AMOUNTS[0]).fill(null)
   )
-  const [score, setScore] = useState(0)
+  const [score, setScore] = useState(0) // Ini adalah JUMLAH jawaban benar
+  const [displayPoints, setDisplayPoints] = useState(0)
   const [submitting, setSubmitting] = useState(false)
-
-  // ⏱️ Timer state
   const [timeLeft, setTimeLeft] = useState(15)
 
-  // load categories on setup
   useEffect(() => {
     if (phase !== 'setup') return
     const loadCats = async () => {
@@ -127,8 +172,22 @@ export default function QuizPage() {
       setSelections(Array(amount).fill(null))
       setSelected(null)
       setScore(0)
+      setDisplayPoints(0) 
+      setItems([]) 
+      setIndex(0) 
     }
   }, [amount, phase])
+
+  // 👇 2. FUNGSI 'next' DIBUNGKUS DENGAN useCallback
+  const next = useCallback(() => {
+    if (index + 1 < items.length) {
+      setIndex((i) => i + 1)
+      setSelected(null)
+    } else {
+      setPhase('finished')
+    }
+  }, [index, items.length]) // 'next' bergantung pada 'index' dan 'items.length'
+
 
   // ⏱️ Timer effect
   useEffect(() => {
@@ -140,7 +199,7 @@ export default function QuizPage() {
         setTimeLeft((prev) => {
           if (prev <= 1) {
             if (interval) clearInterval(interval)
-            next()
+            next() // Sekarang aman untuk memanggil next
             return 15
           }
           return prev - 1
@@ -151,21 +210,28 @@ export default function QuizPage() {
     return () => {
       if (interval) clearInterval(interval)
     }
-  }, [phase, index, selected])
+  }, [phase, index, selected, next]) // 👈 3. TAMBAHKAN 'next' ke dependency array
 
-  async function startQuiz() {
+  async function startQuiz(categoryId: number | 'any', categoryName: string) {
     try {
       setPhase('loading')
+      setCatName(categoryName) 
       const params = new URLSearchParams()
       params.set('amount', String(amount))
       params.set('type', 'multiple')
-      if (catId !== 'any') params.set('category', String(catId))
+      if (categoryId !== 'any') params.set('category', String(categoryId))
       if (difficulty !== 'any') params.set('difficulty', difficulty)
 
       const r = await fetch(`https://opentdb.com/api.php?${params.toString()}`, { cache: 'no-store' })
       const data = await r.json()
       const qs: OTDBQuestion[] = (data.results ?? []).map(decodeQuestion)
-      if (!qs.length) throw new Error('No questions')
+      if (!qs.length) {
+        toast.error('Tidak ada soal ditemukan', {
+          description: 'Coba kurangi jumlah soal atau ganti kategori/difficulty.',
+        })
+        setPhase('setup')
+        return;
+      }
 
       const prepped: QItem[] = qs.map((q) => ({
         q,
@@ -177,6 +243,7 @@ export default function QuizPage() {
       setSelected(null)
       setSelections(Array(qs.length).fill(null))
       setScore(0)
+      setDisplayPoints(0) 
       setPhase('playing')
     } catch {
       setPhase('error')
@@ -187,7 +254,6 @@ export default function QuizPage() {
   const totalQuestions = items.length || amount || QUESTION_AMOUNTS[0]
   const progressPct = items.length ? (index / items.length) * 100 : 0
 
-  // 🎨 Ambil tema berdasarkan kategori saat ini
   const currentTheme = phase === 'playing' ? getCategoryTheme(catName) : getCategoryTheme('general')
 
   function onSelectAnswer(a: string) {
@@ -199,8 +265,12 @@ export default function QuizPage() {
       return next
     })
     if (a === current.q.correct_answer) {
-      setScore((s) => s + 1)
-      // ✨ Confetti saat benar
+      const newScore = score + 1 
+      setScore(newScore)
+      
+      const newPoints = Math.round((newScore / totalQuestions) * MAX_POINTS)
+      setDisplayPoints(newPoints) 
+      
       confetti({
         particleCount: 100,
         spread: 70,
@@ -210,22 +280,17 @@ export default function QuizPage() {
     }
   }
 
-  function next() {
-    if (index + 1 < items.length) {
-      setIndex((i) => i + 1)
-      setSelected(null)
-    } else {
-      setPhase('finished')
-    }
-  }
+  // (Fungsi 'next' sekarang sudah dipindah ke atas)
 
   async function submitScore() {
     try {
       setSubmitting(true)
       const totalQuestions = items.length || amount || QUESTION_AMOUNTS[0]
+      // Kalkulasi poin (skor/total) * MAX
       const points = totalQuestions
         ? Math.round((score / totalQuestions) * MAX_POINTS)
         : 0
+      
       const r = await fetch('/api/leaderboard', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -252,102 +317,89 @@ export default function QuizPage() {
     }
   }
 
-  /* ---------------- RENDER ---------------- */
+  function handlePlayAgain() {
+    setPhase('setup');
+  }
 
+  // ... (Fase Setup, Loading, Error... SAMA SEPERTI SEBELUMNYA)
   if (phase === 'setup') {
     return (
       <SectionShell>
-        <Card className="bg-white/80 backdrop-blur-sm border border-white/50 shadow-lg">
+        <Card className="bg-white/80 backdrop-blur-sm border border-white/50 shadow-lg mb-6">
           <CardHeader>
-            <CardTitle className="text-gray-900">Start a Quiz</CardTitle>
+            <CardTitle className="text-gray-900">1. Manage your quiz</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Category */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                <Select
-                  value={String(catId)}
-                  onValueChange={(val: 'any' | `${number}`) => {
-                    if (val === 'any') {
-                      setCatId('any')
-                      setCatName('Any Category')
-                    } else {
-                      const id = Number(val)
-                      setCatId(id)
-                      const found = categories.find((c) => c.id === id)
-                      setCatName(found?.name || `Category ${id}`)
-                    }
-                  }}
-                >
-                  <SelectTrigger className="w-full bg-white/70 text-gray-900 border-gray-300">
-                    <SelectValue placeholder="Any Category" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white text-gray-900 border-gray-300">
-                    <SelectItem value="any">Any Category</SelectItem>
-                    {categories.map((c) => (
-                      <SelectItem key={c.id} value={String(c.id)}>
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Difficulty */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty</label>
-                <Select
-                  value={String(difficulty)}
-                  onValueChange={(val: 'any' | Diff) => setDifficulty(val)}
-                >
-                  <SelectTrigger className="w-full bg-white/70 text-gray-900 border-gray-300">
-                    <SelectValue placeholder="Any" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white text-gray-900 border-gray-300">
-                    <SelectItem value="any">Any</SelectItem>
-                    <SelectItem value="easy">Easy</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="hard">Hard</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Amount */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Number of Questions
-                </label>
-                <Select
-                  value={String(amount)}
-                  onValueChange={(val: `${number}`) => setAmount(Number(val))}
-                >
-                  <SelectTrigger className="w-full bg-white/70 text-gray-900 border-gray-300">
-                    <SelectValue placeholder={String(QUESTION_AMOUNTS[0])} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white text-gray-900 border-gray-300">
-                    {QUESTION_AMOUNTS.map((amt) => (
-                      <SelectItem key={amt} value={String(amt)}>
-                        {amt} Questions
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+          <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty</label>
+              <Select
+                value={String(difficulty)}
+                onValueChange={(val: 'any' | Diff) => setDifficulty(val)}
+              >
+                <SelectTrigger className="w-full bg-white/70 text-gray-900 border-gray-300">
+                  <SelectValue placeholder="Any" />
+                </SelectTrigger>
+                <SelectContent className="bg-white text-gray-900 border-gray-300">
+                  <SelectItem value="any">Any</SelectItem>
+                  <SelectItem value="easy">Easy</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="hard">Hard</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2">
-              <Button asChild variant="ghost" className="text-gray-900 hover:bg-gray-100">
-                <Link href="/">Cancel</Link>
-              </Button>
-              <Button
-                onClick={startQuiz}
-                className="bg-lime-400 hover:bg-lime-500 text-gray-900 font-semibold"
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Number of Questions
+              </label>
+              <Select
+                value={String(amount)}
+                onValueChange={(val: `${number}`) => setAmount(Number(val))}
               >
-                Start
-              </Button>
+                <SelectTrigger className="w-full bg-white/70 text-gray-900 border-gray-300">
+                  <SelectValue placeholder={String(QUESTION_AMOUNTS[0])} />
+                </SelectTrigger>
+                <SelectContent className="bg-white text-gray-900 border-gray-300">
+                  {QUESTION_AMOUNTS.map((amt) => (
+                    <SelectItem key={amt} value={String(amt)}>
+                      {amt} Questions
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
+        </Card>
+        
+        <Card className="bg-white/80 backdrop-blur-sm border border-white/50 shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-gray-900">2. Choose The Category</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <CategoryBox
+                name="Any Category"
+                theme={getCategoryTheme('general')}
+                onClick={() => startQuiz('any', 'Any Category')}
+                icon={Globe} 
+              />
+
+              {categories.map((c) => (
+                <CategoryBox
+                  key={c.id}
+                  name={c.name}
+                  theme={getCategoryTheme(c.name)}
+                  onClick={() => startQuiz(c.id, c.name)}
+                  icon={getCategoryIcon(c.name)} 
+                />
+              ))}
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button asChild variant="secondary" className="bg-white/70 hover:bg-white text-gray-900 border border-gray-300 w-full">
+                <Link href="/">Cancel</Link>
+            </Button>
+          </CardFooter>
         </Card>
       </SectionShell>
     )
@@ -362,7 +414,7 @@ export default function QuizPage() {
           </CardHeader>
           <CardContent>
             <div className="h-2 w-full rounded bg-gray-200 overflow-hidden">
-              <div className="h-2 w-1/3 animate-pulse bg-lime-400" />
+              <div className="h-2 w-1/3 animate-pulse bg-sky-500" />
             </div>
           </CardContent>
         </Card>
@@ -389,9 +441,15 @@ export default function QuizPage() {
     )
   }
 
+
   if (phase === 'finished') {
     const totalQuestions = items.length || amount || QUESTION_AMOUNTS[0]
     const percent = totalQuestions ? Math.round((score / totalQuestions) * 100) : 0
+    // Hitung total poin
+    const totalPoints = totalQuestions
+        ? Math.round((score / totalQuestions) * MAX_POINTS)
+        : 0
+
     return (
       <SectionShell>
         <div className="space-y-6">
@@ -402,9 +460,17 @@ export default function QuizPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="text-gray-900 text-xl font-semibold">
-                  {score} / {items.length} correct
+                
+                {/* Menampilkan Total Poin */}
+                <div className="space-y-1">
+                  <div className="text-gray-900 text-2xl font-semibold">
+                    {score} / {items.length} correct
+                  </div>
+                  <div className="text-lime-600 text-xl font-bold">
+                    Total Score: {totalPoints} Poin
+                  </div>
                 </div>
+
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge className={currentTheme.badge}>{catName}</Badge>
                   {difficulty !== 'any' && (
@@ -419,12 +485,15 @@ export default function QuizPage() {
               </div>
 
               <div className="h-2 w-full rounded bg-gray-200 overflow-hidden">
-                <div className="h-2 bg-lime-400" style={{ width: `${percent}%` }} />
+                <div className="h-2 bg-sky-500" style={{ width: `${percent}%` }} />
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <Button asChild className="bg-lime-400 hover:bg-lime-500 text-gray-900 font-semibold">
-                  <Link href="/quiz">Play Again</Link>
+                <Button 
+                  onClick={handlePlayAgain} 
+                  className="bg-lime-400 hover:bg-lime-500 text-gray-900 font-semibold"
+                >
+                  Play Again
                 </Button>
                 <Button
                   variant="secondary"
@@ -441,7 +510,7 @@ export default function QuizPage() {
             </CardContent>
           </Card>
 
-          {/* review */}
+          {/* ... (Review section tetap sama) ... */}
           <Card className="bg-white/80 backdrop-blur-sm border border-white/50 shadow-lg">
             <CardHeader>
               <CardTitle className="text-gray-900">Review</CardTitle>
@@ -451,7 +520,7 @@ export default function QuizPage() {
                 const chosen = selections[i]
                 const isCorrect = chosen === item.q.correct_answer
                 return (
-                  <div key={i} className="rounded-lg p-4 bg-gray-50 border border-gray-200">
+                  <div key={i} className="rounded-lg p-4 bg-gray-50/70 border border-gray-200">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Badge className="bg-indigo-100 text-indigo-800">Q{i + 1}</Badge>
@@ -482,8 +551,7 @@ export default function QuizPage() {
                         const isChosen = chosen === opt
                         const isTheCorrect = opt === item.q.correct_answer
                         let cls =
-                          'rounded-md px-3 py-2 text-sm ring-1 ring-gray-200 bg-white text-gray-900' +
-                          'transform hover:scale-[1.02] hover:shadow-md'
+                          'rounded-md px-3 py-2 text-sm ring-1 ring-gray-200 bg-white text-gray-900'
                         if (isTheCorrect) cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-green-500 bg-green-100 text-green-800'
                         if (isChosen && !isTheCorrect) cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-red-500 bg-red-100 text-red-800'
                         if (isChosen && isTheCorrect) cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-green-500 bg-green-100 text-green-800'
@@ -503,30 +571,42 @@ export default function QuizPage() {
   // playing
   return (
     <SectionShell>
-      <div className="space-y-6">
-        {/* ⏱️ Timer visual bar */}
-        <div className="w-full h-2 rounded bg-gray-200 overflow-hidden">
+      <div className="space-y-4"> 
+        <div className="w-full h-2 rounded bg-gray-200/50 overflow-hidden">
           <div
-            className="h-2 bg-lime-400 transition-all duration-1000 ease-linear"
+            className="h-2 bg-lime-400 transition-all duration-1000 ease-linear shadow-xl shadow-lime-400/80"
             style={{ width: `${(timeLeft / 15) * 100}%` }}
           />
         </div>
-        {/* ⏱️ Timer counter with color feedback */}
-        <div className="text-center text-lg font-bold mt-1">
-          {timeLeft > 5 ? (
-            <span className="text-green-600">{timeLeft}</span>
-          ) : timeLeft > 2 ? (
-            <span className="text-yellow-600">{timeLeft}</span>
-          ) : (
-            <span className="text-red-600 animate-pulse">{timeLeft}</span>
-          )}
+
+        <div className="flex justify-center">
+          <div className="
+            w-14 h-14 rounded-full bg-white/70 shadow-md border border-white/50
+            flex items-center justify-center
+          ">
+            <div className="text-center text-xl font-bold">
+              {timeLeft > 5 ? (
+                <span className="text-green-600">{timeLeft}</span>
+              ) : timeLeft > 2 ? (
+                <span className="text-yellow-600">{timeLeft}</span>
+              ) : (
+                <span className="text-red-600 animate-pulse">{timeLeft}</span>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Top bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="text-sm text-gray-600">
-            Question <span className="font-semibold text-gray-900">{index + 1}</span> / {totalQuestions}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+          
+          <div className="flex items-center gap-4"> 
+            <div className="text-sm text-gray-600">
+              Question <span className="font-semibold text-gray-900">{index + 1}</span> / {totalQuestions}
+            </div>
+            <div className="text-sm font-bold text-lime-600">
+              (Score: {displayPoints})
+            </div>
           </div>
+          
           <div className="flex items-center gap-2">
             <Badge className={currentTheme.badge}>{catName}</Badge>
             {difficulty !== 'any' && (
@@ -534,13 +614,12 @@ export default function QuizPage() {
                 {difficulty}
               </Badge>
             )}
-            <div className="w-40 h-2 rounded bg-gray-200 overflow-hidden">
-              <div className="h-2 bg-lime-400 transition-all" style={{ width: `${progressPct}%` }} />
+            <div className="w-32 sm:w-40 h-2 rounded bg-gray-200/50 overflow-hidden">
+              <div className="h-2 bg-sky-500 transition-all" style={{ width: `${progressPct}%` }} />
             </div>
           </div>
         </div>
 
-        {/* Animated Question Card with Feedback Animation */}
         <motion.div
           key={`question-${index}-${selected ? (selected === current.q.correct_answer ? 'correct' : 'wrong') : 'idle'}`}
           initial={{ opacity: 0, y: 20 }}
@@ -549,8 +628,8 @@ export default function QuizPage() {
             y: 0,
             x: selected
               ? selected === current.q.correct_answer
-                ? [0, -10, 10, -5, 5, 0] // bounce
-                : [0, -8, 8, -8, 8, 0]   // shake
+                ? [0, -10, 10, -5, 5, 0] 
+                : [0, -8, 8, -8, 8, 0]   
               : 0,
           }}
           transition={{
@@ -563,7 +642,7 @@ export default function QuizPage() {
               : { duration: 0 },
           }}
         >
-          <Card className={`bg-white/80 backdrop-blur-sm border ${currentTheme.border} shadow-lg`}>
+          <Card className={`bg-white/80 backdrop-blur-sm border-2 ${currentTheme.border} shadow-lg`}>
             <CardHeader className="space-y-2">
               <CardTitle
                 className="text-gray-900 text-xl"
@@ -579,13 +658,14 @@ export default function QuizPage() {
 
                 let classes =
                   'w-full text-left rounded-md px-4 py-3 text-sm font-medium transition ' +
-                  'bg-white hover:bg-gray-50 border border-gray-200 text-gray-900'
+                  `bg-white/70 hover:bg-white border ${currentTheme.border} text-gray-800 hover:text-gray-900 shadow-sm hover:shadow-md` // Tombol opsi berwarna
+                
                 if (showResult && isCorrect) {
                   classes =
-                    'w-full text-left rounded-md px-4 py-3 text-sm font-medium bg-green-100 border border-green-500 text-green-800'
+                    'w-full text-left rounded-md px-4 py-3 text-sm font-medium bg-green-100 border border-green-500 text-green-800 shadow-lg'
                 } else if (showResult && isSelected && !isCorrect) {
                   classes =
-                    'w-full text-left rounded-md px-4 py-3 text-sm font-medium bg-red-100 border border-red-500 text-red-800'
+                    'w-full text-left rounded-md px-4 py-3 text-sm font-medium bg-red-100 border border-red-500 text-red-800 shadow-lg'
                 }
 
                 return (
@@ -628,7 +708,7 @@ export default function QuizPage() {
                 <Button
                   onClick={next}
                   disabled={!selected}
-                  className="bg-lime-400 hover:bg-lime-500 text-gray-900 font-semibold"
+                  className={`text-white font-semibold shadow-md ${currentTheme.base} ${currentTheme.hover}`}
                 >
                   {index + 1 === items.length ? 'Finish' : 'Next'}
                 </Button>
@@ -641,7 +721,35 @@ export default function QuizPage() {
   )
 }
 
-/* ---------- helpers ---------- */
+// ... (Helper CategoryBox, decodeQuestion, shuffle tetap sama)
+function CategoryBox({ name, theme, onClick, icon: IconComponent }: {
+  name: string;
+  theme: { border: string; bg: string; text: string; ring: string; base: string; hover: string; };
+  onClick: () => void;
+  icon: React.ElementType; 
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`
+        p-4 rounded-lg border 
+        transition-all duration-200 ease-in-out
+        transform hover:scale-105 hover:shadow-lg
+        focus:outline-none focus:ring-2 focus:ring-offset-2
+        flex flex-col items-center justify-center text-center h-28
+        ${theme.bg} ${theme.border} ${theme.ring}
+      `}
+    >
+      <IconComponent className={`h-6 w-6 mb-2 ${theme.text}`} strokeWidth={1.5} />
+      
+      <span className={`text-sm font-semibold ${theme.text} leading-tight`}>
+        {name}
+      </span>
+    </button>
+  )
+}
+
+
 function decodeQuestion(q: OTDBRawQuestion): OTDBQuestion {
   return {
     category: q.category,
@@ -661,3 +769,4 @@ function shuffle<T>(arr: T[]): T[] {
   }
   return a
 }
+
