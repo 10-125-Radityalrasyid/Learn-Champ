@@ -22,6 +22,7 @@ import {
   BrainCircuit,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function Navbar() {
   const pathname = usePathname()
@@ -69,7 +70,7 @@ export default function Navbar() {
       {/* === Kiri: Logo === */}
       <Link href="/" className="dk-jamboo text-lg flex items-center gap-1.5">
         <BrainCircuit className="h-7 w-7 text-lime-600" />
-        LEARN CHAMP
+        Learn Champ
       </Link>
 
       {/* === Tengah: Menu utama === */}
@@ -96,49 +97,68 @@ export default function Navbar() {
         </Button>
       </div>
 
-      {/* === Kanan: Login atau Profil === */}
+      {/* === Kanan: Login atau Profil (dengan animasi transisi) === */}
       <div className="hidden sm:flex items-center gap-3 font-mono justify-end min-w-[120px]">
         {isLoading ? (
           <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
             <Loader2 className="h-4 w-4 animate-spin" />
             Loading...
           </div>
-        ) : isAuthenticated ? (
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 bg-white/80 rounded-full px-2 py-1">
-              {user?.image ? (
-                <Image
-                  src={user.image}
-                  alt={user.name ?? 'Akun Google'}
-                  width={28}
-                  height={28}
-                  className="h-7 w-7 rounded-full object-cover"
-                />
-              ) : (
-                <UserCircle className="h-6 w-6 text-gray-500" />
-              )}
-              <span className="text-sm font-medium text-gray-800">
-                {displayName}
-              </span>
-            </div>
-            <Button
-              variant="ghost"
-              onClick={handleSignOut}
-              className="text-gray-700 hover:bg-gray-100 p-1.5"
-              aria-label="Logout"
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
         ) : (
-          <Button
-            onClick={handleSignIn}
-            variant="outline"
-            className="border-gray-300 text-gray-700 hover:bg-gray-100 text-sm flex items-center gap-2 px-4 py-1.5 rounded-md"
-          >
-            <LogIn className="h-4 w-4" />
-            <span>Login</span>
-          </Button>
+          <AnimatePresence mode="wait">
+            {isAuthenticated ? (
+              <motion.div
+                key="profile"
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 40 }}
+                transition={{ duration: 0.4, ease: 'easeOut' }}
+                className="flex items-center gap-2"
+              >
+                <div className="flex items-center gap-2 bg-white/80 rounded-full px-2 py-1">
+                  {user?.image ? (
+                    <Image
+                      src={user.image}
+                      alt={user.name ?? 'Akun Google'}
+                      width={28}
+                      height={28}
+                      className="h-7 w-7 rounded-full object-cover"
+                    />
+                  ) : (
+                    <UserCircle className="h-6 w-6 text-gray-500" />
+                  )}
+                  <span className="text-sm font-medium text-gray-800">
+                    {displayName}
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  onClick={handleSignOut}
+                  className="text-gray-700 hover:bg-gray-100 p-1.5"
+                  aria-label="Logout"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="login"
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 40 }}
+                transition={{ duration: 0.4, ease: 'easeOut' }}
+              >
+                <Button
+                  onClick={handleSignIn}
+                  variant="outline"
+                  className="border-gray-300 text-gray-700 hover:bg-gray-100 text-sm flex items-center gap-2 px-4 py-1.5 rounded-md"
+                >
+                  <LogIn className="h-4 w-4" />
+                  <span>Login</span>
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         )}
       </div>
 
@@ -190,7 +210,7 @@ export default function Navbar() {
               </SheetClose>
             </nav>
 
-            {/* === Bagian bawah (Auth) di mobile === */}
+            {/* === Auth section mobile === */}
             <div className="border-t border-gray-200 bg-white/70 px-4 py-4">
               {isLoading ? (
                 <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
