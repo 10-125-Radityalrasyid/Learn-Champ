@@ -23,7 +23,6 @@ import {
 import { toast } from 'sonner'
 import confetti from 'canvas-confetti'
 import { motion } from 'framer-motion'
-
 import {
   FlaskConical,
   Landmark,
@@ -42,6 +41,10 @@ import {
   Sigma,
   Award,
 } from 'lucide-react'
+
+// 🔒 Import untuk proteksi auth
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 
 type OTDBQuestion = {
   category: string
@@ -181,7 +184,6 @@ function SectionShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative isolate min-h-screen font-mono">
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_bottom,_#89E5F0_0%,_#B6EFF6_25%,_#CCF3FA_67%,_#FAE9FF_100%)]" />
-
       <main className="px-6 lg:px-8 py-10 sm:py-14 md:min-h-screen md:flex md:items-center md:justify-center">
         <div className="w-full max-w-3xl">{children}</div>
       </main>
@@ -222,6 +224,10 @@ function CategoryBox({
 }
 
 export default function QuizPage() {
+  // 🔒 ✅ Langkah 1: Deklarasikan semua hooks di awal
+  const { data: session, status } = useSession()
+  const router = useRouter()
+
   const [phase, setPhase] = useState<QuizPhase>('setup')
   const [categories, setCategories] = useState<Category[]>([])
   const [loadingCategories, setLoadingCategories] = useState(true)
@@ -239,9 +245,39 @@ export default function QuizPage() {
   const [submitting, setSubmitting] = useState(false)
   const [timeLeft, setTimeLeft] = useState(15)
 
-  // 🔧 Ref untuk mencegah next() dipanggil berulang
   const isAdvancingRef = useRef(false)
   const timerActiveRef = useRef(false)
+
+  // 🔒 ✅ Langkah 2: Efek proteksi auth (setelah semua hooks)
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/api/auth/signin?callbackUrl=/quiz')
+    }
+  }, [status, router])
+
+  // 🔒 ✅ Langkah 3: Kondisi return berdasarkan status auth
+  if (status === 'loading') {
+    return (
+      <SectionShell>
+        <Card className="bg-white/80 backdrop-blur-sm border border-white/50 shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-gray-900">Checking authentication...</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-2 w-full rounded bg-gray-200 overflow-hidden">
+              <div className="h-2 w-1/3 animate-pulse bg-sky-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </SectionShell>
+    )
+  }
+
+  if (status === 'unauthenticated') {
+    return null // redirect sudah dipanggil di useEffect
+  }
+
+  // 🔒 ✅ Lanjutkan logika kuis seperti biasa
 
   useEffect(() => {
     if (phase !== 'setup') return
@@ -272,12 +308,10 @@ export default function QuizPage() {
     }
   }, [amount, phase])
 
-  // ✅ FIXED: Gunakan debouncing dengan ref
   const next = useCallback(() => {
     if (isAdvancingRef.current) return
     isAdvancingRef.current = true
 
-    // Reset flag setelah delay kecil
     setTimeout(() => {
       isAdvancingRef.current = false
     }, 300)
@@ -287,7 +321,7 @@ export default function QuizPage() {
       setSelected(null)
       setSelections((prev) => {
         const next = [...prev]
-        next[index] = '' // Tandai sebagai tidak dijawab
+        next[index] = ''
         return next
       })
     } else {
@@ -295,11 +329,10 @@ export default function QuizPage() {
     }
   }, [index, items.length])
 
-  // ✅ FIXED: Timer effect dengan dependency yang tepat
   useEffect(() => {
     if (phase !== 'playing') return
-    if (selected !== null) return // Jika sudah jawab, jangan jalankan timer
-    if (timerActiveRef.current) return // Jika timer sudah aktif, jangan jalankan lagi
+    if (selected !== null) return
+    if (timerActiveRef.current) return
 
     timerActiveRef.current = true
     setTimeLeft(15)
@@ -309,7 +342,7 @@ export default function QuizPage() {
         if (prev <= 1) {
           clearInterval(interval)
           timerActiveRef.current = false
-          next() // Aman, hanya dipanggil sekali
+          next()
           return 15
         }
         return prev - 1
@@ -320,7 +353,7 @@ export default function QuizPage() {
       clearInterval(interval)
       timerActiveRef.current = false
     }
-  }, [phase, index]) // 🧠 Hanya depend on phase dan index
+  }, [phase, index])
 
   async function startQuiz(categoryId: number | 'any', categoryName: string) {
     try {
