@@ -38,7 +38,7 @@ export default function AppFooter() {
         toast.error('❌ Failed to send feedback. Please try again.')
       }
     } catch (error) {
-      toast.error('⚠️ Something went wrong. Please check your connection.')
+      toast.error('⚠ Something went wrong. Please check your connection.')
     } finally {
       setLoading(false)
     }
@@ -64,13 +64,13 @@ export default function AppFooter() {
           </div>
 
           {/* Kolom 2: Menu di Tengah */}
-          <div className="flex flex-col items-center md:items-center">
+          <div className="flex flex-col md:items-center">
             <h3 className="font-semibold text-lg mb-4 text-gray-900">Menu</h3>
-            <ul className="space-y-3 w-full max-w-[200px]">
+            <ul className="space-y-3 w-full">
               <li>
                 <Link
                   href="/"
-                  className="block text-center px-4 py-2 bg-white/70 backdrop-blur-sm border border-gray-400/50 rounded-lg shadow-sm text-sm text-gray-800 hover:text-cyan-700 hover:bg-white/90 font-medium transition"
+                  className="block px-4 py-2 bg-white/70 backdrop-blur-sm border border-gray-400/50 rounded-lg shadow-sm text-sm text-gray-800 hover:text-cyan-700 hover:bg-white/90 font-medium transition"
                 >
                   HomePage
                 </Link>
@@ -78,7 +78,7 @@ export default function AppFooter() {
               <li>
                 <Link
                   href="/leaderboard"
-                  className="block text-center px-4 py-2 bg-white/70 backdrop-blur-sm border border-gray-400/50 rounded-lg shadow-sm text-sm text-gray-800 hover:text-cyan-700 hover:bg-white/90 font-medium transition"
+                  className="block px-4 py-2 bg-white/70 backdrop-blur-sm border border-gray-400/50 rounded-lg shadow-sm text-sm text-gray-800 hover:text-cyan-700 hover:bg-white/90 font-medium transition"
                 >
                   Leaderboard
                 </Link>
@@ -86,7 +86,7 @@ export default function AppFooter() {
               <li>
                 <Link
                   href="/quiz"
-                  className="block text-center px-4 py-2 bg-white/70 backdrop-blur-sm border border-gray-400/50 rounded-lg shadow-sm text-sm text-gray-800 hover:text-cyan-700 hover:bg-white/90 font-medium transition"
+                  className="block px-4 py-2 bg-white/70 backdrop-blur-sm border border-gray-400/50 rounded-lg shadow-sm text-sm text-gray-800 hover:text-cyan-700 hover:bg-white/90 font-medium transition"
                 >
                   Play a Quiz
                 </Link>
@@ -143,17 +143,8 @@ export default function AppFooter() {
 
           <div className="text-center md:text-left">
             <p className="text-xs text-gray-800">
-              © {new Date().getFullYear()} LearnChamp. Made by ❤️ TIM B Kelompok 1
+              © {new Date().getFullYear()} LearnChamp. Made by ❤ TIM B Kelompok 1
             </p>
-          </div>
-
-          <div className="flex gap-4 mt-4 md:mt-0">
-            <a href="https://x.com" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-cyan-700">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm6.208 6.431l-4.708 6.845 4.904 4.724h-1.503l-4.004-3.856-3.729 3.856h-1.026l4.89-6.812-5.004-4.793h1.503l4.11 3.948 3.837-3.948h1.026z"/></svg>
-            </a>
-            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-cyan-700">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm-2 16h-2v-6h2v6zm-1-6.891c-.607 0-1.1-.493-1.1-1.1s.493-1.1 1.1-1.1 1.1.493 1.1 1.1-.493 1.1-1.1 1.1zm7 6.891h-2v-3.647c0-.916-.484-1.353-1.157-1.353-.615 0-1.096.38-1.096 1.205v3.795h-2v-6h2v.879c.642-1.196 1.838-1.928 3.091-1.928 2.059 0 3.109 1.164 3.109 3.693v3.356z"/></svg>
-            </a>
           </div>
         </div>
       </div>

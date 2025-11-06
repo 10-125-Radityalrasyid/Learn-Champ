@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/sheet'
 import {
   Menu,
+  Home,
   Trophy,
   PlayCircle,
   LogIn,
@@ -22,7 +23,6 @@ import {
   BrainCircuit,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 
 export default function Navbar() {
   const pathname = usePathname()
@@ -37,6 +37,8 @@ export default function Navbar() {
 
   const handleSignIn = () => signIn('google')
   const handleSignOut = () => signOut({ callbackUrl: '/' })
+
+  const isActive = (path: string) => pathname === path
 
   const [showNavbar, setShowNavbar] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
@@ -59,22 +61,34 @@ export default function Navbar() {
   return (
     <nav
       className={`
-        fixed top-3 left-1/2 -translate-x-1/2 z-50
+        fixed top-3 z-50
         bg-white border border-gray-200 shadow-sm rounded-full
-        px-6 py-2 flex items-center gap-6
+        px-6 py-2 flex items-center gap-4
         transition-all duration-500 ease-in-out
         ${showNavbar ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10'}
-        w-[94%] md:w-[90%] lg:max-w-[1200px]
+        
+        inset-x-3 
+        md:inset-x-6 
+        lg:inset-x-auto lg:w-[90%] lg:max-w-[1200px] lg:left-1/2 lg:-translate-x-1/2
       `}
     >
       {/* === Kiri: Logo === */}
-      <Link href="/" className="dk-jamboo text-lg flex items-center gap-1.5">
+      {/* 'flex-shrink-0' agar logo tidak 'gepeng' jika menu terlalu lebar */}
+      <Link
+        href="/"
+        className="dk-jamboo text-lg flex items-center gap-1.5 flex-shrink-0"
+      >
         <BrainCircuit className="h-7 w-7 text-lime-600" />
-        Learn Champ
+        {/* 'hidden md:block' membuat teks logo hilang di layar kecil agar pas */}
+        <span className="hidden md:block">Learn Champ</span>
       </Link>
 
-      {/* === Tengah: Menu utama === */}
+      {/* === Tengah: Menu (Desktop) === */}
+      {/* 'flex-1' akan mengambil semua sisa ruang
+        'justify-center' akan memusatkan item di dalamnya
+      */}
       <div className="hidden sm:flex items-center gap-3 font-mono flex-1 justify-center">
+
         <Button
           asChild
           variant="outline"
@@ -88,82 +102,63 @@ export default function Navbar() {
 
         <Button
           asChild
-          className="bg-lime-400 hover:bg-lime-500 text-black text-sm px-4 py-1.5 rounded-md flex items-center gap-2"
+          className="bg-lime-500 hover:bg-lime-600 text-black text-sm px-4 py-1.5 rounded-md flex items-center gap-2"
         >
           <Link href="/leaderboard">
             <Trophy className="h-4 w-4" />
-            Leaderboard
+            Leader Board
           </Link>
         </Button>
       </div>
 
-      {/* === Kanan: Login atau Profil (dengan animasi transisi) === */}
-      <div className="hidden sm:flex items-center gap-3 font-mono justify-end min-w-[120px]">
+      {/* === Kanan: Profil (Desktop) === */}
+      {/* 'flex-shrink-0' agar tidak gepeng */}
+      <div className="hidden sm:flex items-center min-w-[100px] justify-end font-mono flex-shrink-0">
         {isLoading ? (
           <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
             <Loader2 className="h-4 w-4 animate-spin" />
             Loading...
           </div>
+        ) : isAuthenticated ? (
+          <>
+            <div className="flex items-center gap-2 rounded-full bg-white/80 px-2 py-1">
+              {user?.image ? (
+                <Image
+                  src={user.image}
+                  alt={user.name ?? 'Akun Google'}
+                  width={28}
+                  height={28}
+                  className="h-7 w-7 rounded-full object-cover"
+                />
+              ) : (
+                <UserCircle className="h-5 w-5 text-gray-500" />
+              )}
+              <span className="text-xs font-medium text-gray-800">
+                {displayName}
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              onClick={handleSignOut}
+              className="text-gray-700 hover:bg-gray-100 p-1.5"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </>
         ) : (
-          <AnimatePresence mode="wait">
-            {isAuthenticated ? (
-              <motion.div
-                key="profile"
-                initial={{ opacity: 0, x: 40 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 40 }}
-                transition={{ duration: 0.4, ease: 'easeOut' }}
-                className="flex items-center gap-2"
-              >
-                <div className="flex items-center gap-2 bg-white/80 rounded-full px-2 py-1">
-                  {user?.image ? (
-                    <Image
-                      src={user.image}
-                      alt={user.name ?? 'Akun Google'}
-                      width={28}
-                      height={28}
-                      className="h-7 w-7 rounded-full object-cover"
-                    />
-                  ) : (
-                    <UserCircle className="h-6 w-6 text-gray-500" />
-                  )}
-                  <span className="text-sm font-medium text-gray-800">
-                    {displayName}
-                  </span>
-                </div>
-                <Button
-                  variant="ghost"
-                  onClick={handleSignOut}
-                  className="text-gray-700 hover:bg-gray-100 p-1.5"
-                  aria-label="Logout"
-                >
-                  <LogOut className="h-4 w-4" />
-                </Button>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="login"
-                initial={{ opacity: 0, x: 40 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 40 }}
-                transition={{ duration: 0.4, ease: 'easeOut' }}
-              >
-                <Button
-                  onClick={handleSignIn}
-                  variant="outline"
-                  className="border-gray-300 text-gray-700 hover:bg-gray-100 text-sm flex items-center gap-2 px-4 py-1.5 rounded-md"
-                >
-                  <LogIn className="h-4 w-4" />
-                  <span>Login</span>
-                </Button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <Button
+            onClick={handleSignIn}
+            variant="ghost"
+            className="text-gray-700 hover:bg-gray-100 p-1.5"
+          >
+            <LogIn className="h-4 w-4" />
+          </Button>
         )}
       </div>
 
-      {/* === MOBILE MENU === */}
-      <div className="sm:hidden">
+      {/* === Kanan: Menu (Mobile) === */}
+      {/* 'ml-auto' akan mendorong ikon menu ke paling kanan */}
+      <div className="sm:hidden ml-auto">
         <Sheet>
           <SheetTrigger asChild>
             <button
@@ -180,10 +175,24 @@ export default function Navbar() {
               w-[75%] sm:w-[20rem] p-0
               bg-white border-l border-gray-200
               flex flex-col justify-between
-              font-mono
+              font-mono 
             "
           >
             <nav className="px-4 pt-10 pb-6 space-y-3">
+              <SheetClose asChild>
+                <Link
+                  href="/"
+                  className={`flex items-center gap-3 rounded-lg px-4 py-2 transition ${
+                    isActive('/')
+                      ? 'text-lime-500 bg-green-50'
+                      : 'text-gray-800 hover:bg-gray-100'
+                  }`}
+                >
+                  <Home className="h-4 w-4" />
+                  <span className="text-sm font-medium">HomePage</span>
+                </Link>
+              </SheetClose>
+
               <SheetClose asChild>
                 <Button
                   asChild
@@ -204,13 +213,13 @@ export default function Navbar() {
                 >
                   <Link href="/leaderboard">
                     <Trophy className="h-4 w-4" />
-                    Leaderboard
+                    Leader Board
                   </Link>
                 </Button>
               </SheetClose>
             </nav>
 
-            {/* === Auth section mobile === */}
+            {/* Auth Section — Mobile */}
             <div className="border-t border-gray-200 bg-white/70 px-4 py-4">
               {isLoading ? (
                 <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
@@ -252,15 +261,18 @@ export default function Navbar() {
                   </SheetClose>
                 </div>
               ) : (
-                <SheetClose asChild>
-                  <Button
-                    onClick={handleSignIn}
-                    className="w-full bg-gray-900 text-white hover:bg-gray-800 flex items-center justify-center gap-2"
-                  >
-                    <LogIn className="h-4 w-4" />
-                    Login with Google
-                  </Button>
-                </SheetClose>
+                <div className="space-y-3">
+                  <div className="h-[44px]"></div>
+                  <SheetClose asChild>
+                    <Button
+                      onClick={handleSignIn}
+                      className="w-full bg-gray-900 text-white hover:bg-gray-800"
+                    >
+                      <LogIn className="mr-1.5 h-4 w-4" />
+                      Sign in with Google
+                    </Button>
+                  </SheetClose>
+                </div>
               )}
             </div>
           </SheetContent>
