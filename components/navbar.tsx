@@ -80,7 +80,7 @@ export default function Navbar() {
       >
         <BrainCircuit className="h-7 w-7 text-lime-600" />
         {/* 'hidden md:block' membuat teks logo hilang di layar kecil agar pas */}
-        <span className="hidden md:block">Learn Champ</span>
+        <span className="hidden md:block">LEARN CHAMP</span>
       </Link>
 
       {/* === Tengah: Menu (Desktop) === */}
@@ -102,11 +102,11 @@ export default function Navbar() {
 
         <Button
           asChild
-          className="bg-lime-500 hover:bg-lime-600 text-black text-sm px-4 py-1.5 rounded-md flex items-center gap-2"
+          className="bg-lime-400 hover:bg-lime-500 text-black text-sm px-4 py-1.5 rounded-md flex items-center gap-2"
         >
           <Link href="/leaderboard">
             <Trophy className="h-4 w-4" />
-            Leader Board
+            Leaderboard
           </Link>
         </Button>
       </div>
