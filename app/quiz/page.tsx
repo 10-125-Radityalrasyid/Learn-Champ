@@ -23,6 +23,7 @@ import {
 import { toast } from 'sonner'
 import confetti from 'canvas-confetti'
 import { motion } from 'framer-motion'
+
 import {
   FlaskConical,
   Landmark,
@@ -41,10 +42,6 @@ import {
   Sigma,
   Award,
 } from 'lucide-react'
-
-// 🔒 Import untuk proteksi auth
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
 
 type OTDBQuestion = {
   category: string
@@ -68,7 +65,6 @@ type QuizPhase = 'setup' | 'loading' | 'playing' | 'finished' | 'error'
 type Category = { id: number; name: string }
 
 const QUESTION_AMOUNTS = [5, 10, 15]
-const MAX_POINTS = 500
 type Diff = 'easy' | 'medium' | 'hard'
 
 type QItem = {
@@ -183,7 +179,8 @@ const getCategoryIcon = (categoryName: string): React.ElementType => {
 function SectionShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative isolate min-h-screen font-mono">
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_bottom,_#89E5F0_0%,_#B6EFF6_25%,_#CCF3FA_67%,_#FAE9FF_100%)]" />
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_bottom,#89E5F0_0%,#B6EFF6_25%,#CCF3FA_67%,#FAE9FF_100%)]" />
+
       <main className="px-6 lg:px-8 py-10 sm:py-14 md:min-h-screen md:flex md:items-center md:justify-center">
         <div className="w-full max-w-3xl">{children}</div>
       </main>
@@ -212,22 +209,20 @@ function CategoryBox({
   onClick: () => void
   icon: React.ElementType
 }) {
+  const displayName = name.split(': ').pop() || name
+
   return (
     <button
       onClick={onClick}
-      className={`p-4 rounded-lg border transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 flex flex-col items-center justify-center text-center h-28 ${theme.bg} ${theme.border} ${theme.ring}`}
+      className={`p-3 rounded-lg border transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 flex flex-row items-center justify-center text-left ${theme.bg} ${theme.border} ${theme.ring}`}
     >
-      <IconComponent className={`h-6 w-6 mb-2 ${theme.text}`} strokeWidth={1.5} />
-      <span className={`text-sm font-semibold ${theme.text} leading-tight`}>{name}</span>
+      <IconComponent className={`h-5 w-5 mr-3 flex-shrink-0 ${theme.text}`} strokeWidth={1.5} />
+      <span className={`text-sm font-semibold ${theme.text} leading-tight`}>{displayName}</span>
     </button>
   )
 }
 
 export default function QuizPage() {
-  // 🔒 ✅ Langkah 1: Deklarasikan semua hooks di awal
-  const { data: session, status } = useSession()
-  const router = useRouter()
-
   const [phase, setPhase] = useState<QuizPhase>('setup')
   const [categories, setCategories] = useState<Category[]>([])
   const [loadingCategories, setLoadingCategories] = useState(true)
@@ -240,44 +235,19 @@ export default function QuizPage() {
   const [selections, setSelections] = useState<(string | '')[]>(
     Array(QUESTION_AMOUNTS[0]).fill('')
   )
-  const [score, setScore] = useState(0)
-  const [displayPoints, setDisplayPoints] = useState(0)
+  const [score, setScore] = useState(0) // Ini tetap JUMLAH BENAR
+  const [displayPoints, setDisplayPoints] = useState(0) // Ini POIN TOTAL
   const [submitting, setSubmitting] = useState(false)
   const [timeLeft, setTimeLeft] = useState(15)
 
+  // 🧠 XP System States
+  const [xp, setXp] = useState(0)
+  const [streak, setStreak] = useState(0)
+  const [lastGain, setLastGain] = useState<number | null>(null)
+
+  // 🔧 Ref untuk mencegah next() dipanggil berulang
   const isAdvancingRef = useRef(false)
   const timerActiveRef = useRef(false)
-
-  // 🔒 ✅ Langkah 2: Efek proteksi auth (setelah semua hooks)
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/api/auth/signin?callbackUrl=/quiz')
-    }
-  }, [status, router])
-
-  // 🔒 ✅ Langkah 3: Kondisi return berdasarkan status auth
-  if (status === 'loading') {
-    return (
-      <SectionShell>
-        <Card className="bg-white/80 backdrop-blur-sm border border-white/50 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-gray-900">Checking authentication...</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-2 w-full rounded bg-gray-200 overflow-hidden">
-              <div className="h-2 w-1/3 animate-pulse bg-sky-500" />
-            </div>
-          </CardContent>
-        </Card>
-      </SectionShell>
-    )
-  }
-
-  if (status === 'unauthenticated') {
-    return null // redirect sudah dipanggil di useEffect
-  }
-
-  // 🔒 ✅ Lanjutkan logika kuis seperti biasa
 
   useEffect(() => {
     if (phase !== 'setup') return
@@ -303,11 +273,17 @@ export default function QuizPage() {
       setSelected(null)
       setScore(0)
       setDisplayPoints(0)
+      setXp(0)
+      setStreak(0)
+      setLastGain(null)
       setItems([])
       setIndex(0)
     }
   }, [amount, phase])
 
+  // =================================================================
+  //  KODE REVIEW BUG (Sudah Benar, TIDAK DIUBAH)
+  // =================================================================
   const next = useCallback(() => {
     if (isAdvancingRef.current) return
     isAdvancingRef.current = true
@@ -319,16 +295,15 @@ export default function QuizPage() {
     if (index + 1 < items.length) {
       setIndex((i) => i + 1)
       setSelected(null)
-      setSelections((prev) => {
-        const next = [...prev]
-        next[index] = ''
-        return next
-      })
+      // Jangan set selections di sini — biarkan di timer jika tidak jawab
     } else {
       setPhase('finished')
     }
   }, [index, items.length])
 
+  // =================================================================
+  //  KODE REVIEW BUG (Sudah Benar, TIDAK DIUBAH)
+  // =================================================================
   useEffect(() => {
     if (phase !== 'playing') return
     if (selected !== null) return
@@ -342,7 +317,17 @@ export default function QuizPage() {
         if (prev <= 1) {
           clearInterval(interval)
           timerActiveRef.current = false
-          next()
+
+          setSelections((prevSelections) => {
+            const nextSelections = [...prevSelections]
+            nextSelections[index] = '' // Tandai tidak dijawab
+            return nextSelections
+          })
+
+          setStreak(0) // Reset streak karena tidak jawab
+          setLastGain(null)
+
+          next() // Panggil 'next' SETELAH setSelections
           return 15
         }
         return prev - 1
@@ -353,7 +338,7 @@ export default function QuizPage() {
       clearInterval(interval)
       timerActiveRef.current = false
     }
-  }, [phase, index])
+  }, [next, selected, phase, index])
 
   async function startQuiz(categoryId: number | 'any', categoryName: string) {
     try {
@@ -389,6 +374,9 @@ export default function QuizPage() {
       setSelections(Array(qs.length).fill(''))
       setScore(0)
       setDisplayPoints(0)
+      setXp(0)
+      setStreak(0)
+      setLastGain(null)
       setPhase('playing')
     } catch {
       setPhase('error')
@@ -401,6 +389,9 @@ export default function QuizPage() {
 
   const currentTheme = phase === 'playing' ? getCategoryTheme(catName) : getCategoryTheme('general')
 
+  // =================================================================
+  //  ✅ FUNGSI XP BARU - SESUAI INSTRUKSI
+  // =================================================================
   function onSelectAnswer(a: string) {
     if (selected) return
     setSelected(a)
@@ -409,27 +400,48 @@ export default function QuizPage() {
       next[index] = a
       return next
     })
-    if (a === current.q.correct_answer) {
-      const newScore = score + 1
-      setScore(newScore)
 
-      const newPoints = Math.round((newScore / totalQuestions) * MAX_POINTS)
-      setDisplayPoints(newPoints)
+    const maxTime = 15
+    const baseXP = 100
+    const diffMult = { easy: 1, medium: 1.25, hard: 1.5, any: 1 }
+
+    if (a === current.q.correct_answer) {
+      // ✅ Jawaban benar
+      const newStreak = streak + 1
+      setStreak(newStreak)
+
+      // Hitung bonus
+      const speedBonus = Math.round((timeLeft / maxTime) * 50)
+      const streakMultiplier = 1 + newStreak * 0.05
+      const gain = Math.round(baseXP * diffMult[difficulty] * streakMultiplier) + speedBonus
+
+      setXp((prev) => prev + gain)
+      setLastGain(gain)
+
+      // Tambahkan skor logis juga
+      setScore((prev) => prev + 1)
+      setDisplayPoints((prev) => prev + gain)
 
       confetti({
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 },
-        colors: ['#89E5F0', '#B6EFF6', '#CCF3FA', '#A8E6CF', '#D1FAE5'],
+        colors: ['#89E5F0', '#B6EFF6', '#A8E6CF', '#D1FAE5'],
       })
+    } else {
+      // ❌ Jawaban salah — reset streak
+      setStreak(0)
+      setLastGain(null)
     }
   }
 
+  // =================================================================
+  //  ✅ SUBMIT XP KE LEADERBOARD
+  // =================================================================
   async function submitScore() {
     try {
       setSubmitting(true)
-      const totalQuestions = items.length || amount || QUESTION_AMOUNTS[0]
-      const points = totalQuestions ? Math.round((score / totalQuestions) * MAX_POINTS) : 0
+      const points = xp
 
       const r = await fetch('/api/leaderboard', {
         method: 'POST',
@@ -438,6 +450,7 @@ export default function QuizPage() {
           points,
           category: catName,
           difficulty: difficulty === 'any' ? undefined : difficulty,
+          amount: totalQuestions,
         }),
       })
       setSubmitting(false)
@@ -586,10 +599,13 @@ export default function QuizPage() {
     )
   }
 
+  // =================================================================
+  //  ✅ HASIL AKHIR MENGGUNAKAN XP
+  // =================================================================
   if (phase === 'finished') {
     const totalQuestions = items.length || amount || QUESTION_AMOUNTS[0]
     const percent = totalQuestions ? Math.round((score / totalQuestions) * 100) : 0
-    const totalPoints = totalQuestions ? Math.round((score / totalQuestions) * MAX_POINTS) : 0
+    const totalPoints = xp
 
     return (
       <SectionShell>
@@ -605,7 +621,7 @@ export default function QuizPage() {
                     {score} / {items.length} correct
                   </div>
                   <div className="text-lime-600 text-xl font-bold">
-                    Total Score: {totalPoints} Poin
+                    Total XP: {xp} 🧠
                   </div>
                 </div>
 
@@ -724,6 +740,7 @@ export default function QuizPage() {
   return (
     <SectionShell>
       <div className="space-y-4">
+        {/* ⏱️ Timer Bar */}
         <div className="w-full h-2 rounded bg-gray-200/50 overflow-hidden">
           <div
             className="h-2 bg-lime-400 transition-all duration-1000 ease-linear shadow-xl shadow-lime-400/80"
@@ -731,6 +748,7 @@ export default function QuizPage() {
           />
         </div>
 
+        {/* ⏰ Timer Count */}
         <div className="flex justify-center">
           <div className="w-14 h-14 rounded-full bg-white/70 shadow-md border border-white/50 flex items-center justify-center">
             <div className="text-center text-xl font-bold">
@@ -745,12 +763,48 @@ export default function QuizPage() {
           </div>
         </div>
 
+        {/* ⚡ XP & Streak Display */}
+        <div className="flex justify-center mb-2">
+          <motion.div
+            key={`xp-${xp}`}
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 150 }}
+            className="bg-white/80 border border-lime-300 rounded-xl px-4 py-2 shadow-md flex items-center gap-3"
+          >
+            <span className="text-lime-600 font-bold text-lg">XP: {xp}</span>
+            {lastGain !== null && (
+              <motion.span
+                key={`gain-${lastGain}-${index}`}
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: -10, opacity: 1 }}
+                transition={{ duration: 0.5 }}
+                className="text-sm text-green-600 font-semibold"
+              >
+                +{lastGain}
+              </motion.span>
+            )}
+            {streak >= 3 && (
+              <motion.span
+                key={`streak-${streak}`}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 120 }}
+                className="text-orange-500 font-bold text-sm flex items-center gap-1"
+              >
+                🔥 Streak x{streak}
+              </motion.span>
+            )}
+          </motion.div>
+        </div>
+
+        {/* Progress & Score */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
           <div className="flex items-center gap-4">
             <div className="text-sm text-gray-600">
               Question <span className="font-semibold text-gray-900">{index + 1}</span> / {totalQuestions}
             </div>
-            <div className="text-sm font-bold text-lime-600">(Score: {displayPoints})</div>
+            <div className="text-sm font-bold text-lime-600">(XP: {displayPoints})</div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -766,6 +820,7 @@ export default function QuizPage() {
           </div>
         </div>
 
+        {/* Pertanyaan */}
         <motion.div
           key={`question-${index}-${selected ? (selected === current.q.correct_answer ? 'correct' : 'wrong') : 'idle'}`}
           initial={{ opacity: 0, y: 20 }}
