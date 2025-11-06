@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid'
 import { Badge } from '@/components/ui/badge'
@@ -191,9 +191,10 @@ function SectionShell({ children }: { children: React.ReactNode }) {
 
 function CategorySkeleton() {
   return (
-    <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 animate-pulse flex flex-col items-center justify-center h-28">
-      <div className="h-4 w-6 mb-2 bg-gray-300 rounded-full"></div>
-      <div className="h-4 w-20 bg-gray-300 rounded mt-2"></div>
+    <div className="p-4 rounded-lg border border-gray-200 bg-white animate-pulse">
+      <div className="w-full h-16 bg-gray-300 rounded mb-3"></div>
+      <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
     </div>
   )
 }
@@ -223,34 +224,38 @@ function CategoryBox({
 export default function QuizPage() {
   const [phase, setPhase] = useState<QuizPhase>('setup')
   const [categories, setCategories] = useState<Category[]>([])
-  const [loadingCategories, setLoadingCategories] = useState(true) // <-- TAMBAHAN
+  const [loadingCategories, setLoadingCategories] = useState(true)
   const [catName, setCatName] = useState<string | 'Any Category'>('Any Category')
   const [difficulty, setDifficulty] = useState<Diff | 'any'>('any')
   const [amount, setAmount] = useState<number>(QUESTION_AMOUNTS[0])
   const [items, setItems] = useState<QItem[]>([])
   const [index, setIndex] = useState(0)
   const [selected, setSelected] = useState<string | null>(null)
-  const [selections, setSelections] = useState<(string | null)[]>(
-    Array(QUESTION_AMOUNTS[0]).fill(null)
+  const [selections, setSelections] = useState<(string | '')[]>(
+    Array(QUESTION_AMOUNTS[0]).fill('')
   )
   const [score, setScore] = useState(0)
   const [displayPoints, setDisplayPoints] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [timeLeft, setTimeLeft] = useState(15)
 
+  // 🔧 Ref untuk mencegah next() dipanggil berulang
+  const isAdvancingRef = useRef(false)
+  const timerActiveRef = useRef(false)
+
   useEffect(() => {
     if (phase !== 'setup') return
     const loadCats = async () => {
       try {
-        setLoadingCategories(true) // <-- TAMBAHAN
-        const r = await fetch('https://opentdb.com/api_category.php', { cache: 'no-store' }) // <-- Perbaiki URL (hapus spasi)
+        setLoadingCategories(true)
+        const r = await fetch('https://opentdb.com/api_category.php', { cache: 'no-store' })
         const d = await r.json()
         const arr: Category[] = d?.trivia_categories ?? []
         setCategories(arr)
       } catch {
         setCategories([])
       } finally {
-        setLoadingCategories(false) // <-- TAMBAHAN: pastikan selalu di-set false
+        setLoadingCategories(false)
       }
     }
     loadCats()
@@ -258,7 +263,7 @@ export default function QuizPage() {
 
   useEffect(() => {
     if (phase === 'setup') {
-      setSelections(Array(amount).fill(null))
+      setSelections(Array(amount).fill(''))
       setSelected(null)
       setScore(0)
       setDisplayPoints(0)
@@ -267,36 +272,55 @@ export default function QuizPage() {
     }
   }, [amount, phase])
 
+  // ✅ FIXED: Gunakan debouncing dengan ref
   const next = useCallback(() => {
+    if (isAdvancingRef.current) return
+    isAdvancingRef.current = true
+
+    // Reset flag setelah delay kecil
+    setTimeout(() => {
+      isAdvancingRef.current = false
+    }, 300)
+
     if (index + 1 < items.length) {
       setIndex((i) => i + 1)
       setSelected(null)
+      setSelections((prev) => {
+        const next = [...prev]
+        next[index] = '' // Tandai sebagai tidak dijawab
+        return next
+      })
     } else {
       setPhase('finished')
     }
   }, [index, items.length])
 
+  // ✅ FIXED: Timer effect dengan dependency yang tepat
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null
+    if (phase !== 'playing') return
+    if (selected !== null) return // Jika sudah jawab, jangan jalankan timer
+    if (timerActiveRef.current) return // Jika timer sudah aktif, jangan jalankan lagi
 
-    if (phase === 'playing' && selected === null) {
-      setTimeLeft(15)
-      interval = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            if (interval) clearInterval(interval)
-            next()
-            return 15
-          }
-          return prev - 1
-        })
-      }, 1000)
-    }
+    timerActiveRef.current = true
+    setTimeLeft(15)
+
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval)
+          timerActiveRef.current = false
+          next() // Aman, hanya dipanggil sekali
+          return 15
+        }
+        return prev - 1
+      })
+    }, 1000)
 
     return () => {
-      if (interval) clearInterval(interval)
+      clearInterval(interval)
+      timerActiveRef.current = false
     }
-  }, [phase, index, selected, next])
+  }, [phase, index]) // 🧠 Hanya depend on phase dan index
 
   async function startQuiz(categoryId: number | 'any', categoryName: string) {
     try {
@@ -329,7 +353,7 @@ export default function QuizPage() {
       setItems(prepped)
       setIndex(0)
       setSelected(null)
-      setSelections(Array(qs.length).fill(null))
+      setSelections(Array(qs.length).fill(''))
       setScore(0)
       setDisplayPoints(0)
       setPhase('playing')
@@ -466,9 +490,8 @@ export default function QuizPage() {
                 icon={Globe}
               />
 
-              {/* Tampilkan skeleton saat loading */}
               {loadingCategories
-                ? Array.from({ length: 24 }).map((_, i) => <CategorySkeleton key={`skeleton-${i}`} />)
+                ? Array.from({ length: 12 }).map((_, i) => <CategorySkeleton key={`skeleton-${i}`} />)
                 : categories.map((c) => (
                     <CategoryBox
                       key={c.id}
@@ -538,7 +561,6 @@ export default function QuizPage() {
     return (
       <SectionShell>
         <div className="space-y-6">
-          {/* summary */}
           <Card className="bg-white/80 backdrop-blur-sm border border-white/50 shadow-lg">
             <CardHeader>
               <CardTitle className="text-gray-900">Your Results</CardTitle>
@@ -630,18 +652,27 @@ export default function QuizPage() {
 
                     <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {item.options.map((opt) => {
-                        const isChosen = chosen === opt
+                        const isChosen = chosen !== '' && chosen === opt
                         const isTheCorrect = opt === item.q.correct_answer
+
                         let cls =
                           'rounded-md px-3 py-2 text-sm ring-1 ring-gray-200 bg-white text-gray-900'
-                        if (isTheCorrect)
-                          cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-green-500 bg-green-100 text-green-800'
-                        if (isChosen && !isTheCorrect)
-                          cls =
-                            'rounded-md px-3 py-2 text-sm ring-1 ring-red-500 bg-red-100 text-red-800'
-                        if (isChosen && isTheCorrect)
+
+                        if (isTheCorrect) {
                           cls =
                             'rounded-md px-3 py-2 text-sm ring-1 ring-green-500 bg-green-100 text-green-800'
+                        }
+
+                        if (isChosen && !isTheCorrect) {
+                          cls =
+                            'rounded-md px-3 py-2 text-sm ring-1 ring-red-500 bg-red-100 text-red-800'
+                        }
+
+                        if (isChosen && isTheCorrect) {
+                          cls =
+                            'rounded-md px-3 py-2 text-sm ring-1 ring-green-500 bg-green-100 text-green-800'
+                        }
+
                         return (
                           <div key={opt} className={cls} dangerouslySetInnerHTML={{ __html: opt }} />
                         )
