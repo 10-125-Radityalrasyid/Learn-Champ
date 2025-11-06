@@ -23,7 +23,6 @@ import {
 import { toast } from 'sonner'
 import confetti from 'canvas-confetti'
 import { motion } from 'framer-motion'
-
 import {
   FlaskConical,
   Landmark,
@@ -43,16 +42,11 @@ import {
   Award,
 } from 'lucide-react'
 
-type OTDBQuestion = {
-  category: string
-  type: 'multiple' | 'boolean'
-  difficulty: 'easy' | 'medium' | 'hard'
-  question: string
-  correct_answer: string
-  incorrect_answers: string[]
-}
+// 🔒 Proteksi autentikasi
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 
-type OTDBRawQuestion = {
+type OTDBQuestion = {
   category: string
   type: 'multiple' | 'boolean'
   difficulty: 'easy' | 'medium' | 'hard'
@@ -172,7 +166,6 @@ const getCategoryIcon = (categoryName: string): React.ElementType => {
   if (cat.includes('art')) return Palette
   if (cat.includes('sports')) return Trophy
   if (cat.includes('general knowledge')) return Brain
-
   return Award
 }
 
@@ -180,7 +173,6 @@ function SectionShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative isolate min-h-screen font-mono">
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_bottom,#89E5F0_0%,#B6EFF6_25%,#CCF3FA_67%,#FAE9FF_100%)]" />
-
       <main className="px-6 lg:px-8 py-10 sm:py-14 md:min-h-screen md:flex md:items-center md:justify-center">
         <div className="w-full max-w-3xl">{children}</div>
       </main>
@@ -223,6 +215,11 @@ function CategoryBox({
 }
 
 export default function QuizPage() {
+  // 🔒 Proteksi autentikasi
+  const {  session, status } = useSession()
+  const router = useRouter()
+
+  // 🧠 Semua state di awal
   const [phase, setPhase] = useState<QuizPhase>('setup')
   const [categories, setCategories] = useState<Category[]>([])
   const [loadingCategories, setLoadingCategories] = useState(true)
@@ -235,20 +232,48 @@ export default function QuizPage() {
   const [selections, setSelections] = useState<(string | '')[]>(
     Array(QUESTION_AMOUNTS[0]).fill('')
   )
-  const [score, setScore] = useState(0) // Ini tetap JUMLAH BENAR
-  const [displayPoints, setDisplayPoints] = useState(0) // Ini POIN TOTAL
+  const [score, setScore] = useState(0)
+  const [displayPoints, setDisplayPoints] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [timeLeft, setTimeLeft] = useState(15)
 
-  // 🧠 XP System States
+  // 🧠 XP System
   const [xp, setXp] = useState(0)
   const [streak, setStreak] = useState(0)
   const [lastGain, setLastGain] = useState<number | null>(null)
 
-  // 🔧 Ref untuk mencegah next() dipanggil berulang
   const isAdvancingRef = useRef(false)
   const timerActiveRef = useRef(false)
 
+  // 🔒 Redirect jika belum login
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/api/auth/signin?callbackUrl=/quiz')
+    }
+  }, [status, router])
+
+  if (status === 'loading') {
+    return (
+      <SectionShell>
+        <Card className="bg-white/80 backdrop-blur-sm border border-white/50 shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-gray-900">Checking authentication...</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-2 w-full rounded bg-gray-200 overflow-hidden">
+              <div className="h-2 w-1/3 animate-pulse bg-sky-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </SectionShell>
+    )
+  }
+
+  if (status === 'unauthenticated') {
+    return null
+  }
+
+  // 🔁 Load categories
   useEffect(() => {
     if (phase !== 'setup') return
     const loadCats = async () => {
@@ -267,6 +292,7 @@ export default function QuizPage() {
     loadCats()
   }, [phase])
 
+  // 🔁 Reset saat setup
   useEffect(() => {
     if (phase === 'setup') {
       setSelections(Array(amount).fill(''))
@@ -281,13 +307,10 @@ export default function QuizPage() {
     }
   }, [amount, phase])
 
-  // =================================================================
-  //  KODE REVIEW BUG (Sudah Benar, TIDAK DIUBAH)
-  // =================================================================
+  // 🔄 Next question
   const next = useCallback(() => {
     if (isAdvancingRef.current) return
     isAdvancingRef.current = true
-
     setTimeout(() => {
       isAdvancingRef.current = false
     }, 300)
@@ -295,15 +318,12 @@ export default function QuizPage() {
     if (index + 1 < items.length) {
       setIndex((i) => i + 1)
       setSelected(null)
-      // Jangan set selections di sini — biarkan di timer jika tidak jawab
     } else {
       setPhase('finished')
     }
   }, [index, items.length])
 
-  // =================================================================
-  //  KODE REVIEW BUG (Sudah Benar, TIDAK DIUBAH)
-  // =================================================================
+  // ⏱️ Timer
   useEffect(() => {
     if (phase !== 'playing') return
     if (selected !== null) return
@@ -318,16 +338,15 @@ export default function QuizPage() {
           clearInterval(interval)
           timerActiveRef.current = false
 
-          setSelections((prevSelections) => {
-            const nextSelections = [...prevSelections]
-            nextSelections[index] = '' // Tandai tidak dijawab
-            return nextSelections
+          setSelections((prev) => {
+            const next = [...prev]
+            next[index] = ''
+            return next
           })
-
-          setStreak(0) // Reset streak karena tidak jawab
+          setStreak(0)
           setLastGain(null)
 
-          next() // Panggil 'next' SETELAH setSelections
+          next()
           return 15
         }
         return prev - 1
@@ -338,8 +357,9 @@ export default function QuizPage() {
       clearInterval(interval)
       timerActiveRef.current = false
     }
-  }, [next, selected, phase, index])
+  }, [phase, index, selected, next])
 
+  // ▶️ Start quiz
   async function startQuiz(categoryId: number | 'any', categoryName: string) {
     try {
       setPhase('loading')
@@ -386,12 +406,9 @@ export default function QuizPage() {
   const current = items[index]
   const totalQuestions = items.length || amount || QUESTION_AMOUNTS[0]
   const progressPct = items.length ? (index / items.length) * 100 : 0
-
   const currentTheme = phase === 'playing' ? getCategoryTheme(catName) : getCategoryTheme('general')
 
-  // =================================================================
-  //  ✅ FUNGSI XP BARU - SESUAI INSTRUKSI
-  // =================================================================
+  // ✅ XP Logic
   function onSelectAnswer(a: string) {
     if (selected) return
     setSelected(a)
@@ -406,19 +423,15 @@ export default function QuizPage() {
     const diffMult = { easy: 1, medium: 1.25, hard: 1.5, any: 1 }
 
     if (a === current.q.correct_answer) {
-      // ✅ Jawaban benar
       const newStreak = streak + 1
       setStreak(newStreak)
 
-      // Hitung bonus
       const speedBonus = Math.round((timeLeft / maxTime) * 50)
       const streakMultiplier = 1 + newStreak * 0.05
       const gain = Math.round(baseXP * diffMult[difficulty] * streakMultiplier) + speedBonus
 
       setXp((prev) => prev + gain)
       setLastGain(gain)
-
-      // Tambahkan skor logis juga
       setScore((prev) => prev + 1)
       setDisplayPoints((prev) => prev + gain)
 
@@ -429,25 +442,20 @@ export default function QuizPage() {
         colors: ['#89E5F0', '#B6EFF6', '#A8E6CF', '#D1FAE5'],
       })
     } else {
-      // ❌ Jawaban salah — reset streak
       setStreak(0)
       setLastGain(null)
     }
   }
 
-  // =================================================================
-  //  ✅ SUBMIT XP KE LEADERBOARD
-  // =================================================================
+  // 📤 Submit XP ke leaderboard
   async function submitScore() {
     try {
       setSubmitting(true)
-      const points = xp
-
       const r = await fetch('/api/leaderboard', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          points,
+          points: xp,
           category: catName,
           difficulty: difficulty === 'any' ? undefined : difficulty,
           amount: totalQuestions,
@@ -474,6 +482,7 @@ export default function QuizPage() {
     setPhase('setup')
   }
 
+  // === UI: Setup ===
   if (phase === 'setup') {
     return (
       <SectionShell>
@@ -484,10 +493,7 @@ export default function QuizPage() {
           <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty</label>
-              <Select
-                value={String(difficulty)}
-                onValueChange={(val: 'any' | Diff) => setDifficulty(val)}
-              >
+              <Select value={String(difficulty)} onValueChange={(val: 'any' | Diff) => setDifficulty(val)}>
                 <SelectTrigger className="w-full bg-white/70 text-gray-900 border-gray-300">
                   <SelectValue placeholder="Any" />
                 </SelectTrigger>
@@ -499,30 +505,21 @@ export default function QuizPage() {
                 </SelectContent>
               </Select>
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Number of Questions
-              </label>
-              <Select
-                value={String(amount)}
-                onValueChange={(val: `${number}`) => setAmount(Number(val))}
-              >
+              <label className="block text-sm font-medium text-gray-700 mb-2">Number of Questions</label>
+              <Select value={String(amount)} onValueChange={(val: `${number}`) => setAmount(Number(val))}>
                 <SelectTrigger className="w-full bg-white/70 text-gray-900 border-gray-300">
                   <SelectValue placeholder={String(QUESTION_AMOUNTS[0])} />
                 </SelectTrigger>
                 <SelectContent className="bg-white text-gray-900 border-gray-300">
                   {QUESTION_AMOUNTS.map((amt) => (
-                    <SelectItem key={amt} value={String(amt)}>
-                      {amt} Questions
-                    </SelectItem>
+                    <SelectItem key={amt} value={String(amt)}>{amt} Questions</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           </CardContent>
         </Card>
-
         <Card className="bg-white/80 backdrop-blur-sm border border-white/50 shadow-lg">
           <CardHeader>
             <CardTitle className="text-gray-900">2. Choose The Category</CardTitle>
@@ -535,7 +532,6 @@ export default function QuizPage() {
                 onClick={() => startQuiz('any', 'Any Category')}
                 icon={Globe}
               />
-
               {loadingCategories
                 ? Array.from({ length: 12 }).map((_, i) => <CategorySkeleton key={`skeleton-${i}`} />)
                 : categories.map((c) => (
@@ -550,11 +546,7 @@ export default function QuizPage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button
-              asChild
-              variant="secondary"
-              className="bg-white/70 hover:bg-white text-gray-900 border border-gray-300 w-full"
-            >
+            <Button asChild variant="secondary" className="bg-white/70 hover:bg-white text-gray-900 border border-gray-300 w-full">
               <Link href="/">Cancel</Link>
             </Button>
           </CardFooter>
@@ -563,6 +555,7 @@ export default function QuizPage() {
     )
   }
 
+  // === UI: Loading / Error ===
   if (phase === 'loading') {
     return (
       <SectionShell>
@@ -587,10 +580,7 @@ export default function QuizPage() {
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">Couldn’t start the quiz</h1>
           <p className="mt-3 text-gray-600">Please refresh to try again.</p>
           <div className="mt-6">
-            <Link
-              href="/"
-              className="rounded-md bg-lime-400 px-5 py-2.5 text-sm font-semibold text-gray-900 hover:bg-lime-500"
-            >
+            <Link href="/" className="rounded-md bg-lime-400 px-5 py-2.5 text-sm font-semibold text-gray-900 hover:bg-lime-500">
               Back to Home
             </Link>
           </div>
@@ -599,11 +589,8 @@ export default function QuizPage() {
     )
   }
 
-  // =================================================================
-  //  ✅ HASIL AKHIR MENGGUNAKAN XP
-  // =================================================================
+  // === UI: Finished ===
   if (phase === 'finished') {
-    const totalQuestions = items.length || amount || QUESTION_AMOUNTS[0]
     const percent = totalQuestions ? Math.round((score / totalQuestions) * 100) : 0
     const totalPoints = xp
 
@@ -617,36 +604,22 @@ export default function QuizPage() {
             <CardContent className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="space-y-1">
-                  <div className="text-gray-900 text-2xl font-semibold">
-                    {score} / {items.length} correct
-                  </div>
-                  <div className="text-lime-600 text-xl font-bold">
-                    Total XP: {xp} 🧠
-                  </div>
+                  <div className="text-gray-900 text-2xl font-semibold">{score} / {items.length} correct</div>
+                  <div className="text-lime-600 text-xl font-bold">Total XP: {xp} 🧠</div>
                 </div>
-
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge className={currentTheme.badge}>{catName}</Badge>
                   {difficulty !== 'any' && (
-                    <Badge variant="outline" className="text-gray-700 border-gray-300">
-                      {difficulty}
-                    </Badge>
+                    <Badge variant="outline" className="text-gray-700 border-gray-300">{difficulty}</Badge>
                   )}
-                  <Badge variant="outline" className="text-gray-700 border-gray-300">
-                    {percent}%
-                  </Badge>
+                  <Badge variant="outline" className="text-gray-700 border-gray-300">{percent}%</Badge>
                 </div>
               </div>
-
               <div className="h-2 w-full rounded bg-gray-200 overflow-hidden">
                 <div className="h-2 bg-sky-500" style={{ width: `${percent}%` }} />
               </div>
-
               <div className="flex flex-wrap gap-3">
-                <Button
-                  onClick={handlePlayAgain}
-                  className="bg-lime-400 hover:bg-lime-500 text-gray-900 font-semibold"
-                >
+                <Button onClick={handlePlayAgain} className="bg-lime-400 hover:bg-lime-500 text-gray-900 font-semibold">
                   Play Again
                 </Button>
                 <Button
@@ -677,9 +650,7 @@ export default function QuizPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Badge className="bg-indigo-100 text-indigo-800">Q{i + 1}</Badge>
-                        <Badge variant="outline" className="text-gray-700 border-gray-300">
-                          {item.q.difficulty}
-                        </Badge>
+                        <Badge variant="outline" className="text-gray-700 border-gray-300">{item.q.difficulty}</Badge>
                       </div>
                       <div className="flex items-center gap-2">
                         {isCorrect ? (
@@ -693,38 +664,16 @@ export default function QuizPage() {
                         )}
                       </div>
                     </div>
-
-                    <h3
-                      className="mt-3 text-gray-900 font-semibold"
-                      dangerouslySetInnerHTML={{ __html: item.q.question }}
-                    />
-
+                    <h3 className="mt-3 text-gray-900 font-semibold" dangerouslySetInnerHTML={{ __html: item.q.question }} />
                     <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {item.options.map((opt) => {
                         const isChosen = chosen !== '' && chosen === opt
                         const isTheCorrect = opt === item.q.correct_answer
-
-                        let cls =
-                          'rounded-md px-3 py-2 text-sm ring-1 ring-gray-200 bg-white text-gray-900'
-
-                        if (isTheCorrect) {
-                          cls =
-                            'rounded-md px-3 py-2 text-sm ring-1 ring-green-500 bg-green-100 text-green-800'
-                        }
-
-                        if (isChosen && !isTheCorrect) {
-                          cls =
-                            'rounded-md px-3 py-2 text-sm ring-1 ring-red-500 bg-red-100 text-red-800'
-                        }
-
-                        if (isChosen && isTheCorrect) {
-                          cls =
-                            'rounded-md px-3 py-2 text-sm ring-1 ring-green-500 bg-green-100 text-green-800'
-                        }
-
-                        return (
-                          <div key={opt} className={cls} dangerouslySetInnerHTML={{ __html: opt }} />
-                        )
+                        let cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-gray-200 bg-white text-gray-900'
+                        if (isTheCorrect) cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-green-500 bg-green-100 text-green-800'
+                        if (isChosen && !isTheCorrect) cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-red-500 bg-red-100 text-red-800'
+                        if (isChosen && isTheCorrect) cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-green-500 bg-green-100 text-green-800'
+                        return <div key={opt} className={cls} dangerouslySetInnerHTML={{ __html: opt }} />
                       })}
                     </div>
                   </div>
@@ -737,10 +686,10 @@ export default function QuizPage() {
     )
   }
 
+  // === UI: Playing ===
   return (
     <SectionShell>
       <div className="space-y-4">
-        {/* ⏱️ Timer Bar */}
         <div className="w-full h-2 rounded bg-gray-200/50 overflow-hidden">
           <div
             className="h-2 bg-lime-400 transition-all duration-1000 ease-linear shadow-xl shadow-lime-400/80"
@@ -748,7 +697,6 @@ export default function QuizPage() {
           />
         </div>
 
-        {/* ⏰ Timer Count */}
         <div className="flex justify-center">
           <div className="w-14 h-14 rounded-full bg-white/70 shadow-md border border-white/50 flex items-center justify-center">
             <div className="text-center text-xl font-bold">
@@ -763,7 +711,7 @@ export default function QuizPage() {
           </div>
         </div>
 
-        {/* ⚡ XP & Streak Display */}
+        {/* ⚡ XP & Streak */}
         <div className="flex justify-center mb-2">
           <motion.div
             key={`xp-${xp}`}
@@ -798,7 +746,6 @@ export default function QuizPage() {
           </motion.div>
         </div>
 
-        {/* Progress & Score */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
           <div className="flex items-center gap-4">
             <div className="text-sm text-gray-600">
@@ -806,13 +753,10 @@ export default function QuizPage() {
             </div>
             <div className="text-sm font-bold text-lime-600">(XP: {displayPoints})</div>
           </div>
-
           <div className="flex items-center gap-2">
             <Badge className={currentTheme.badge}>{catName}</Badge>
             {difficulty !== 'any' && (
-              <Badge variant="outline" className="text-gray-700 border-gray-300">
-                {difficulty}
-              </Badge>
+              <Badge variant="outline" className="text-gray-700 border-gray-300">{difficulty}</Badge>
             )}
             <div className="w-32 sm:w-40 h-2 rounded bg-gray-200/50 overflow-hidden">
               <div className="h-2 bg-sky-500 transition-all" style={{ width: `${progressPct}%` }} />
@@ -820,7 +764,6 @@ export default function QuizPage() {
           </div>
         </div>
 
-        {/* Pertanyaan */}
         <motion.div
           key={`question-${index}-${selected ? (selected === current.q.correct_answer ? 'correct' : 'wrong') : 'idle'}`}
           initial={{ opacity: 0, y: 20 }}
@@ -843,38 +786,20 @@ export default function QuizPage() {
               : { duration: 0 },
           }}
         >
-          <Card
-            className={`bg-white/80 backdrop-blur-sm border-2 ${currentTheme.border} shadow-lg`}
-          >
+          <Card className={`bg-white/80 backdrop-blur-sm border-2 ${currentTheme.border} shadow-lg`}>
             <CardHeader className="space-y-2">
-              <CardTitle
-                className="text-gray-900 text-xl"
-                dangerouslySetInnerHTML={{ __html: current?.q.question || '' }}
-              />
+              <CardTitle className="text-gray-900 text-xl" dangerouslySetInnerHTML={{ __html: current?.q.question || '' }} />
             </CardHeader>
-
             <CardContent className="space-y-3">
               {current?.options.map((a) => {
                 const isSelected = selected === a
                 const isCorrect = a === current.q.correct_answer
                 const showResult = selected !== null
-
-                let classes =
-                  'w-full text-left rounded-md px-4 py-3 text-sm font-medium transition ' +
-                  `bg-white/70 hover:bg-white border ${currentTheme.border} text-gray-800 hover:text-gray-900 shadow-sm hover:shadow-md`
-
-                if (showResult && isCorrect) {
-                  classes =
-                    'w-full text-left rounded-md px-4 py-3 text-sm font-medium bg-green-100 border border-green-500 text-green-800 shadow-lg'
-                } else if (showResult && isSelected && !isCorrect) {
-                  classes =
-                    'w-full text-left rounded-md px-4 py-3 text-sm font-medium bg-red-100 border border-red-500 text-red-800 shadow-lg'
-                }
-
+                let classes = 'w-full text-left rounded-md px-4 py-3 text-sm font-medium transition bg-white/70 hover:bg-white border ' + currentTheme.border + ' text-gray-800 hover:text-gray-900 shadow-sm hover:shadow-md'
+                if (showResult && isCorrect) classes = 'w-full text-left rounded-md px-4 py-3 text-sm font-medium bg-green-100 border border-green-500 text-green-800 shadow-lg'
+                if (showResult && isSelected && !isCorrect) classes = 'w-full text-left rounded-md px-4 py-3 text-sm font-medium bg-red-100 border border-red-500 text-red-800 shadow-lg'
                 return (
                   <button
-                    title={a.replace(/<\/?[^>]+(>|$)/g, '')}
-                    aria-label={a.replace(/<\/?[^>]+(>|$)/g, '')}
                     key={a}
                     disabled={showResult}
                     onClick={() => onSelectAnswer(a)}
@@ -883,7 +808,6 @@ export default function QuizPage() {
                   />
                 )
               })}
-
               {selected && (
                 <div className="mt-4 flex items-center gap-2 text-sm">
                   {selected === current.q.correct_answer ? (
@@ -902,11 +826,9 @@ export default function QuizPage() {
                   )}
                 </div>
               )}
-
               <div className="pt-3">
                 <Separator className="bg-gray-200" />
               </div>
-
               <div className="flex justify-end">
                 <Button
                   onClick={next}
@@ -924,7 +846,7 @@ export default function QuizPage() {
   )
 }
 
-function decodeQuestion(q: OTDBRawQuestion): OTDBQuestion {
+function decodeQuestion(q: any): OTDBQuestion {
   return {
     category: q.category,
     type: q.type,
