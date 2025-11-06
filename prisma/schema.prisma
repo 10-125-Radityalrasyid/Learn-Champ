@@ -80,3 +80,13 @@ model Score {
   @@index([points, createdAt])
   @@index([category, difficulty, points])
 }
+
+model Feedback {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String
+  message   String
+  createdAt DateTime @default(now())
+  
+  @@map("feedbacks")
+}
