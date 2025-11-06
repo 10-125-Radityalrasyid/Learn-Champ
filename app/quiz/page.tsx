@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react' 
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid'
 import { Badge } from '@/components/ui/badge'
@@ -25,22 +25,22 @@ import confetti from 'canvas-confetti'
 import { motion } from 'framer-motion'
 
 import {
-  FlaskConical, 
-  Landmark,    
-  Globe,       
-  Film,        
-  Music,       
-  Book,        
-  Tv,          
-  Gamepad2,    
-  Palette,     
-  Car,         
-  Cat,         
-  Trophy,      
-  Brain,       
-  Code,        
-  Sigma,       
-  Award,       
+  FlaskConical,
+  Landmark,
+  Globe,
+  Film,
+  Music,
+  Book,
+  Tv,
+  Gamepad2,
+  Palette,
+  Car,
+  Cat,
+  Trophy,
+  Brain,
+  Code,
+  Sigma,
+  Award,
 } from 'lucide-react'
 
 type OTDBQuestion = {
@@ -65,60 +65,116 @@ type QuizPhase = 'setup' | 'loading' | 'playing' | 'finished' | 'error'
 type Category = { id: number; name: string }
 
 const QUESTION_AMOUNTS = [5, 10, 15]
-const MAX_POINTS = 500 
+const MAX_POINTS = 500
 type Diff = 'easy' | 'medium' | 'hard'
 
 type QItem = {
   q: OTDBQuestion
-  options: string[] 
+  options: string[]
 }
 
 const getCategoryTheme = (categoryName: string) => {
   const cat = categoryName.toLowerCase()
-  const defaultTheme = { base: 'bg-indigo-500', hover: 'hover:bg-indigo-600', text: 'text-indigo-900', border: 'border-indigo-300', bg: 'bg-indigo-50', badge: 'bg-indigo-100 text-indigo-800', ring: 'focus:ring-indigo-400' }
+  const defaultTheme = {
+    base: 'bg-indigo-500',
+    hover: 'hover:bg-indigo-600',
+    text: 'text-indigo-900',
+    border: 'border-indigo-300',
+    bg: 'bg-indigo-50',
+    badge: 'bg-indigo-100 text-indigo-800',
+    ring: 'focus:ring-indigo-400',
+  }
 
   if (cat.includes('science') || cat.includes('math') || cat.includes('computer')) {
-    return { base: 'bg-blue-500', hover: 'hover:bg-blue-600', text: 'text-blue-900', border: 'border-blue-300', bg: 'bg-blue-50', badge: 'bg-blue-100 text-blue-800', ring: 'focus:ring-blue-400' }
+    return {
+      base: 'bg-blue-500',
+      hover: 'hover:bg-blue-600',
+      text: 'text-blue-900',
+      border: 'border-blue-300',
+      bg: 'bg-blue-50',
+      badge: 'bg-blue-100 text-blue-800',
+      ring: 'focus:ring-blue-400',
+    }
   }
   if (cat.includes('history') || cat.includes('politics')) {
-    return { base: 'bg-amber-500', hover: 'hover:bg-amber-600', text: 'text-amber-900', border: 'border-amber-300', bg: 'bg-amber-50', badge: 'bg-amber-100 text-amber-800', ring: 'focus:ring-amber-400' }
+    return {
+      base: 'bg-amber-500',
+      hover: 'hover:bg-amber-600',
+      text: 'text-amber-900',
+      border: 'border-amber-300',
+      bg: 'bg-amber-50',
+      badge: 'bg-amber-100 text-amber-800',
+      ring: 'focus:ring-amber-400',
+    }
   }
   if (cat.includes('geography') || cat.includes('animals') || cat.includes('vehicles')) {
-    return { base: 'bg-emerald-500', hover: 'hover:bg-emerald-600', text: 'text-emerald-900', border: 'border-emerald-300', bg: 'bg-emerald-50', badge: 'bg-emerald-100 text-emerald-800', ring: 'focus:ring-emerald-400' }
+    return {
+      base: 'bg-emerald-500',
+      hover: 'hover:bg-emerald-600',
+      text: 'text-emerald-900',
+      border: 'border-emerald-300',
+      bg: 'bg-emerald-50',
+      badge: 'bg-emerald-100 text-emerald-800',
+      ring: 'focus:ring-emerald-400',
+    }
   }
   if (cat.includes('art') || cat.includes('celebrities') || cat.includes('entertainment')) {
-    return { base: 'bg-purple-500', hover: 'hover:bg-purple-600', text: 'text-purple-900', border: 'border-purple-300', bg: 'bg-purple-50', badge: 'bg-purple-100 text-purple-800', ring: 'focus:ring-purple-400' }
+    return {
+      base: 'bg-purple-500',
+      hover: 'hover:bg-purple-600',
+      text: 'text-purple-900',
+      border: 'border-purple-300',
+      bg: 'bg-purple-50',
+      badge: 'bg-purple-100 text-purple-800',
+      ring: 'focus:ring-purple-400',
+    }
   }
   if (cat.includes('sports') || cat.includes('mythology')) {
-    return { base: 'bg-orange-500', hover: 'hover:bg-orange-600', text: 'text-orange-900', border: 'border-orange-300', bg: 'bg-orange-50', badge: 'bg-orange-100 text-orange-800', ring: 'focus:ring-orange-400' }
+    return {
+      base: 'bg-orange-500',
+      hover: 'hover:bg-orange-600',
+      text: 'text-orange-900',
+      border: 'border-orange-300',
+      bg: 'bg-orange-50',
+      badge: 'bg-orange-100 text-orange-800',
+      ring: 'focus:ring-orange-400',
+    }
   }
   if (cat.includes('general')) {
-    return { base: 'bg-lime-500', hover: 'hover:bg-lime-600', text: 'text-lime-900', border: 'border-lime-300', bg: 'bg-lime-50', badge: 'bg-lime-100 text-lime-800', ring: 'focus:ring-lime-400' }
+    return {
+      base: 'bg-lime-500',
+      hover: 'hover:bg-lime-600',
+      text: 'text-lime-900',
+      border: 'border-lime-300',
+      bg: 'bg-lime-50',
+      badge: 'bg-lime-100 text-lime-800',
+      ring: 'focus:ring-lime-400',
+    }
   }
   return defaultTheme
 }
 
 const getCategoryIcon = (categoryName: string): React.ElementType => {
-  const cat = categoryName.toLowerCase();
-  if (cat.includes('computer')) return Code;
-  if (cat.includes('math')) return Sigma;
-  if (cat.includes('science')) return FlaskConical;
-  if (cat.includes('history')) return Landmark;
-  if (cat.includes('politics')) return Landmark;
-  if (cat.includes('geography')) return Globe;
-  if (cat.includes('animals')) return Cat;
-  if (cat.includes('vehicles')) return Car;
-  if (cat.includes('film')) return Film;
-  if (cat.includes('music')) return Music;
-  if (cat.includes('television')) return Tv;
-  if (cat.includes('video games')) return Gamepad2;
-  if (cat.includes('books')) return Book;
-  if (cat.includes('entertainment')) return Film;
-  if (cat.includes('art')) return Palette;
-  if (cat.includes('sports')) return Trophy;
-  if (cat.includes('general knowledge')) return Brain;
-  
-  return Award;
+  const cat = categoryName.toLowerCase()
+  if (cat.includes('computer')) return Code
+  if (cat.includes('math')) return Sigma
+  if (cat.includes('science')) return FlaskConical
+  if (cat.includes('history')) return Landmark
+  if (cat.includes('politics')) return Landmark
+  if (cat.includes('geography')) return Globe
+  if (cat.includes('animals')) return Cat
+  if (cat.includes('vehicles')) return Car
+  if (cat.includes('film')) return Film
+  if (cat.includes('music')) return Music
+  if (cat.includes('television')) return Tv
+  if (cat.includes('video games')) return Gamepad2
+  if (cat.includes('books')) return Book
+  if (cat.includes('entertainment')) return Film
+  if (cat.includes('art')) return Palette
+  if (cat.includes('sports')) return Trophy
+  if (cat.includes('general knowledge')) return Brain
+
+  return Award
 }
 
 function SectionShell({ children }: { children: React.ReactNode }) {
@@ -133,9 +189,41 @@ function SectionShell({ children }: { children: React.ReactNode }) {
   )
 }
 
+function CategorySkeleton() {
+  return (
+    <div className="p-4 rounded-lg border border-gray-200 bg-gray-50 animate-pulse flex flex-col items-center justify-center h-28">
+      <div className="h-4 w-6 mb-2 bg-gray-300 rounded-full"></div>
+      <div className="h-4 w-20 bg-gray-300 rounded mt-2"></div>
+    </div>
+  )
+}
+
+function CategoryBox({
+  name,
+  theme,
+  onClick,
+  icon: IconComponent,
+}: {
+  name: string
+  theme: { border: string; bg: string; text: string; ring: string; base: string; hover: string }
+  onClick: () => void
+  icon: React.ElementType
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`p-4 rounded-lg border transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 flex flex-col items-center justify-center text-center h-28 ${theme.bg} ${theme.border} ${theme.ring}`}
+    >
+      <IconComponent className={`h-6 w-6 mb-2 ${theme.text}`} strokeWidth={1.5} />
+      <span className={`text-sm font-semibold ${theme.text} leading-tight`}>{name}</span>
+    </button>
+  )
+}
+
 export default function QuizPage() {
   const [phase, setPhase] = useState<QuizPhase>('setup')
   const [categories, setCategories] = useState<Category[]>([])
+  const [loadingCategories, setLoadingCategories] = useState(true) // <-- TAMBAHAN
   const [catName, setCatName] = useState<string | 'Any Category'>('Any Category')
   const [difficulty, setDifficulty] = useState<Diff | 'any'>('any')
   const [amount, setAmount] = useState<number>(QUESTION_AMOUNTS[0])
@@ -145,7 +233,7 @@ export default function QuizPage() {
   const [selections, setSelections] = useState<(string | null)[]>(
     Array(QUESTION_AMOUNTS[0]).fill(null)
   )
-  const [score, setScore] = useState(0) 
+  const [score, setScore] = useState(0)
   const [displayPoints, setDisplayPoints] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [timeLeft, setTimeLeft] = useState(15)
@@ -154,12 +242,15 @@ export default function QuizPage() {
     if (phase !== 'setup') return
     const loadCats = async () => {
       try {
-        const r = await fetch('https://opentdb.com/api_category.php', { cache: 'no-store' })
+        setLoadingCategories(true) // <-- TAMBAHAN
+        const r = await fetch('https://opentdb.com/api_category.php', { cache: 'no-store' }) // <-- Perbaiki URL (hapus spasi)
         const d = await r.json()
         const arr: Category[] = d?.trivia_categories ?? []
         setCategories(arr)
       } catch {
         setCategories([])
+      } finally {
+        setLoadingCategories(false) // <-- TAMBAHAN: pastikan selalu di-set false
       }
     }
     loadCats()
@@ -170,9 +261,9 @@ export default function QuizPage() {
       setSelections(Array(amount).fill(null))
       setSelected(null)
       setScore(0)
-      setDisplayPoints(0) 
-      setItems([]) 
-      setIndex(0) 
+      setDisplayPoints(0)
+      setItems([])
+      setIndex(0)
     }
   }, [amount, phase])
 
@@ -183,7 +274,7 @@ export default function QuizPage() {
     } else {
       setPhase('finished')
     }
-  }, [index, items.length]) 
+  }, [index, items.length])
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null
@@ -194,7 +285,7 @@ export default function QuizPage() {
         setTimeLeft((prev) => {
           if (prev <= 1) {
             if (interval) clearInterval(interval)
-            next() 
+            next()
             return 15
           }
           return prev - 1
@@ -205,19 +296,21 @@ export default function QuizPage() {
     return () => {
       if (interval) clearInterval(interval)
     }
-  }, [phase, index, selected, next]) 
+  }, [phase, index, selected, next])
 
   async function startQuiz(categoryId: number | 'any', categoryName: string) {
     try {
       setPhase('loading')
-      setCatName(categoryName) 
+      setCatName(categoryName)
       const params = new URLSearchParams()
       params.set('amount', String(amount))
       params.set('type', 'multiple')
       if (categoryId !== 'any') params.set('category', String(categoryId))
       if (difficulty !== 'any') params.set('difficulty', difficulty)
 
-      const r = await fetch(`https://opentdb.com/api.php?${params.toString()}`, { cache: 'no-store' })
+      const r = await fetch(`https://opentdb.com/api.php?${params.toString()}`, {
+        cache: 'no-store',
+      })
       const data = await r.json()
       const qs: OTDBQuestion[] = (data.results ?? []).map(decodeQuestion)
       if (!qs.length) {
@@ -225,7 +318,7 @@ export default function QuizPage() {
           description: 'Coba kurangi jumlah soal atau ganti kategori/difficulty.',
         })
         setPhase('setup')
-        return;
+        return
       }
 
       const prepped: QItem[] = qs.map((q) => ({
@@ -238,7 +331,7 @@ export default function QuizPage() {
       setSelected(null)
       setSelections(Array(qs.length).fill(null))
       setScore(0)
-      setDisplayPoints(0) 
+      setDisplayPoints(0)
       setPhase('playing')
     } catch {
       setPhase('error')
@@ -260,30 +353,27 @@ export default function QuizPage() {
       return next
     })
     if (a === current.q.correct_answer) {
-      const newScore = score + 1 
+      const newScore = score + 1
       setScore(newScore)
-      
+
       const newPoints = Math.round((newScore / totalQuestions) * MAX_POINTS)
-      setDisplayPoints(newPoints) 
-      
+      setDisplayPoints(newPoints)
+
       confetti({
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 },
-        colors: ['#89E5F0', '#B6EFF6', '#CCF3FA', '#A8E6CF', '#D1FAE5']
+        colors: ['#89E5F0', '#B6EFF6', '#CCF3FA', '#A8E6CF', '#D1FAE5'],
       })
     }
   }
-
 
   async function submitScore() {
     try {
       setSubmitting(true)
       const totalQuestions = items.length || amount || QUESTION_AMOUNTS[0]
-      const points = totalQuestions
-        ? Math.round((score / totalQuestions) * MAX_POINTS)
-        : 0
-      
+      const points = totalQuestions ? Math.round((score / totalQuestions) * MAX_POINTS) : 0
+
       const r = await fetch('/api/leaderboard', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -311,7 +401,7 @@ export default function QuizPage() {
   }
 
   function handlePlayAgain() {
-    setPhase('setup');
+    setPhase('setup')
   }
 
   if (phase === 'setup') {
@@ -362,7 +452,7 @@ export default function QuizPage() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="bg-white/80 backdrop-blur-sm border border-white/50 shadow-lg">
           <CardHeader>
             <CardTitle className="text-gray-900">2. Choose The Category</CardTitle>
@@ -373,23 +463,30 @@ export default function QuizPage() {
                 name="Any Category"
                 theme={getCategoryTheme('general')}
                 onClick={() => startQuiz('any', 'Any Category')}
-                icon={Globe} 
+                icon={Globe}
               />
 
-              {categories.map((c) => (
-                <CategoryBox
-                  key={c.id}
-                  name={c.name}
-                  theme={getCategoryTheme(c.name)}
-                  onClick={() => startQuiz(c.id, c.name)}
-                  icon={getCategoryIcon(c.name)} 
-                />
-              ))}
+              {/* Tampilkan skeleton saat loading */}
+              {loadingCategories
+                ? Array.from({ length: 24 }).map((_, i) => <CategorySkeleton key={`skeleton-${i}`} />)
+                : categories.map((c) => (
+                    <CategoryBox
+                      key={c.id}
+                      name={c.name}
+                      theme={getCategoryTheme(c.name)}
+                      onClick={() => startQuiz(c.id, c.name)}
+                      icon={getCategoryIcon(c.name)}
+                    />
+                  ))}
             </div>
           </CardContent>
           <CardFooter>
-            <Button asChild variant="secondary" className="bg-white/70 hover:bg-white text-gray-900 border border-gray-300 w-full">
-                <Link href="/">Cancel</Link>
+            <Button
+              asChild
+              variant="secondary"
+              className="bg-white/70 hover:bg-white text-gray-900 border border-gray-300 w-full"
+            >
+              <Link href="/">Cancel</Link>
             </Button>
           </CardFooter>
         </Card>
@@ -433,13 +530,10 @@ export default function QuizPage() {
     )
   }
 
-
   if (phase === 'finished') {
     const totalQuestions = items.length || amount || QUESTION_AMOUNTS[0]
     const percent = totalQuestions ? Math.round((score / totalQuestions) * 100) : 0
-    const totalPoints = totalQuestions
-        ? Math.round((score / totalQuestions) * MAX_POINTS)
-        : 0
+    const totalPoints = totalQuestions ? Math.round((score / totalQuestions) * MAX_POINTS) : 0
 
     return (
       <SectionShell>
@@ -478,8 +572,8 @@ export default function QuizPage() {
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <Button 
-                  onClick={handlePlayAgain} 
+                <Button
+                  onClick={handlePlayAgain}
                   className="bg-lime-400 hover:bg-lime-500 text-gray-900 font-semibold"
                 >
                   Play Again
@@ -540,10 +634,17 @@ export default function QuizPage() {
                         const isTheCorrect = opt === item.q.correct_answer
                         let cls =
                           'rounded-md px-3 py-2 text-sm ring-1 ring-gray-200 bg-white text-gray-900'
-                        if (isTheCorrect) cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-green-500 bg-green-100 text-green-800'
-                        if (isChosen && !isTheCorrect) cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-red-500 bg-red-100 text-red-800'
-                        if (isChosen && isTheCorrect) cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-green-500 bg-green-100 text-green-800'
-                        return <div key={opt} className={cls} dangerouslySetInnerHTML={{ __html: opt }} />
+                        if (isTheCorrect)
+                          cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-green-500 bg-green-100 text-green-800'
+                        if (isChosen && !isTheCorrect)
+                          cls =
+                            'rounded-md px-3 py-2 text-sm ring-1 ring-red-500 bg-red-100 text-red-800'
+                        if (isChosen && isTheCorrect)
+                          cls =
+                            'rounded-md px-3 py-2 text-sm ring-1 ring-green-500 bg-green-100 text-green-800'
+                        return (
+                          <div key={opt} className={cls} dangerouslySetInnerHTML={{ __html: opt }} />
+                        )
                       })}
                     </div>
                   </div>
@@ -558,7 +659,7 @@ export default function QuizPage() {
 
   return (
     <SectionShell>
-      <div className="space-y-4"> 
+      <div className="space-y-4">
         <div className="w-full h-2 rounded bg-gray-200/50 overflow-hidden">
           <div
             className="h-2 bg-lime-400 transition-all duration-1000 ease-linear shadow-xl shadow-lime-400/80"
@@ -567,10 +668,7 @@ export default function QuizPage() {
         </div>
 
         <div className="flex justify-center">
-          <div className="
-            w-14 h-14 rounded-full bg-white/70 shadow-md border border-white/50
-            flex items-center justify-center
-          ">
+          <div className="w-14 h-14 rounded-full bg-white/70 shadow-md border border-white/50 flex items-center justify-center">
             <div className="text-center text-xl font-bold">
               {timeLeft > 5 ? (
                 <span className="text-green-600">{timeLeft}</span>
@@ -584,16 +682,13 @@ export default function QuizPage() {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-          
-          <div className="flex items-center gap-4"> 
+          <div className="flex items-center gap-4">
             <div className="text-sm text-gray-600">
               Question <span className="font-semibold text-gray-900">{index + 1}</span> / {totalQuestions}
             </div>
-            <div className="text-sm font-bold text-lime-600">
-              (Score: {displayPoints})
-            </div>
+            <div className="text-sm font-bold text-lime-600">(Score: {displayPoints})</div>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Badge className={currentTheme.badge}>{catName}</Badge>
             {difficulty !== 'any' && (
@@ -615,8 +710,8 @@ export default function QuizPage() {
             y: 0,
             x: selected
               ? selected === current.q.correct_answer
-                ? [0, -10, 10, -5, 5, 0] 
-                : [0, -8, 8, -8, 8, 0]   
+                ? [0, -10, 10, -5, 5, 0]
+                : [0, -8, 8, -8, 8, 0]
               : 0,
           }}
           transition={{
@@ -624,12 +719,14 @@ export default function QuizPage() {
             y: { duration: 0.3 },
             x: selected
               ? selected === current.q.correct_answer
-                ? { duration: 0.6, ease: "easeOut" }
-                : { duration: 0.4, ease: "easeInOut" }
+                ? { duration: 0.6, ease: 'easeOut' }
+                : { duration: 0.4, ease: 'easeInOut' }
               : { duration: 0 },
           }}
         >
-          <Card className={`bg-white/80 backdrop-blur-sm border-2 ${currentTheme.border} shadow-lg`}>
+          <Card
+            className={`bg-white/80 backdrop-blur-sm border-2 ${currentTheme.border} shadow-lg`}
+          >
             <CardHeader className="space-y-2">
               <CardTitle
                 className="text-gray-900 text-xl"
@@ -645,8 +742,8 @@ export default function QuizPage() {
 
                 let classes =
                   'w-full text-left rounded-md px-4 py-3 text-sm font-medium transition ' +
-                  `bg-white/70 hover:bg-white border ${currentTheme.border} text-gray-800 hover:text-gray-900 shadow-sm hover:shadow-md` // Tombol opsi berwarna
-                
+                  `bg-white/70 hover:bg-white border ${currentTheme.border} text-gray-800 hover:text-gray-900 shadow-sm hover:shadow-md`
+
                 if (showResult && isCorrect) {
                   classes =
                     'w-full text-left rounded-md px-4 py-3 text-sm font-medium bg-green-100 border border-green-500 text-green-800 shadow-lg'
@@ -707,34 +804,6 @@ export default function QuizPage() {
     </SectionShell>
   )
 }
-
-function CategoryBox({ name, theme, onClick, icon: IconComponent }: {
-  name: string;
-  theme: { border: string; bg: string; text: string; ring: string; base: string; hover: string; };
-  onClick: () => void;
-  icon: React.ElementType; 
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`
-        p-4 rounded-lg border 
-        transition-all duration-200 ease-in-out
-        transform hover:scale-105 hover:shadow-lg
-        focus:outline-none focus:ring-2 focus:ring-offset-2
-        flex flex-col items-center justify-center text-center h-28
-        ${theme.bg} ${theme.border} ${theme.ring}
-      `}
-    >
-      <IconComponent className={`h-6 w-6 mb-2 ${theme.text}`} strokeWidth={1.5} />
-      
-      <span className={`text-sm font-semibold ${theme.text} leading-tight`}>
-        {name}
-      </span>
-    </button>
-  )
-}
-
 
 function decodeQuestion(q: OTDBRawQuestion): OTDBQuestion {
   return {
