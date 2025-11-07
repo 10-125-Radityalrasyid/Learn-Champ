@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -77,42 +77,47 @@ export default function LeaderboardPage() {
     fetchCategories()
   }, [])
 
-  // Helper: resolve ID and name
-  const resolveCategory = (input: string) => {
-    const t = input.trim()
-    if (!t) return { id: '', name: '' }
-    if (/^\d+$/.test(t)) {
-      const byId = categories.find((c) => String(c.id) === t)
-      return { id: t, name: byId?.name || '' }
-    }
-    const exact = categories.find((c) => c.name.toLowerCase() === t.toLowerCase())
-    if (exact) return { id: String(exact.id), name: exact.name }
-    const incl = categories.find((c) => c.name.toLowerCase().includes(t.toLowerCase()))
-    if (incl) return { id: String(incl.id), name: incl.name }
-    return { id: '', name: '' }
-  }
+  // Helper: resolve category name (smart resolver)
+  const resolveCategoryName = useCallback(
+    (input: string): string => {
+      const t = input.trim()
+      if (!t) return ''
+      // if it's numeric, lookup by ID
+      if (/^\d+$/.test(t)) {
+        const found = categories.find((c) => String(c.id) === t)
+        return found?.name || ''
+      }
+      // match by name (case-insensitive)
+      const exact = categories.find((c) => c.name.toLowerCase() === t.toLowerCase())
+      if (exact) return exact.name
+      const incl = categories.find((c) => c.name.toLowerCase().includes(t.toLowerCase()))
+      if (incl) return incl.name
+      return ''
+    },
+    [categories]
+  )
 
-  // Load leaderboard (with fallback: ID → Name)
-  async function load(useFallback = false) {
+  // Load leaderboard
+  const load = useCallback(async () => {
     try {
       setLoading(true)
       const q = new URLSearchParams()
-      const { id, name } = resolveCategory(categoryInput)
-      const categoryParam = useFallback ? name : id
-      if (categoryParam) q.set('category', categoryParam)
-      if (difficulty !== 'any') q.set('difficulty', difficulty)
+
+      const resolvedName = resolveCategoryName(categoryInput)
+      // ✅ kirim nama kategori, bukan ID
+      if (resolvedName) {
+        q.set('category', resolvedName)
+      }
+
+      if (difficulty !== 'any') {
+        q.set('difficulty', difficulty)
+      }
+
       q.set('limit', limit)
 
       const res = await fetch(`/api/leaderboard?${q.toString()}`, { cache: 'no-store' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()
-
-      // 🔁 Fallback: if no results and we haven't tried name-based yet
-      if (!useFallback && data?.leaderboard?.length === 0 && id && name && name !== id) {
-        console.log('No results with ID, retrying with name fallback...')
-        return load(true)
-      }
-
       setRows(data?.leaderboard || [])
     } catch (err) {
       console.error('Leaderboard load error:', err)
@@ -121,11 +126,11 @@ export default function LeaderboardPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [resolveCategoryName, categoryInput, difficulty, limit])
 
   useEffect(() => {
     load()
-  }, [])
+  }, [load])
 
   useEffect(() => {
     if (!hasPrefilledName.current && session?.user?.name) {
@@ -161,12 +166,12 @@ export default function LeaderboardPage() {
   const subtitle = useMemo(() => {
     const parts: string[] = []
     if (categoryInput.trim()) {
-      const { name } = resolveCategory(categoryInput)
-      parts.push(`Category: ${name || categoryInput}`)
+      const resolvedName = resolveCategoryName(categoryInput)
+      parts.push(`Category: ${resolvedName || categoryInput}`)
     }
     if (difficulty !== 'any') parts.push(`Difficulty: ${difficulty}`)
     return parts.join(' • ')
-  }, [categoryInput, difficulty, categories])
+  }, [categoryInput, difficulty, resolveCategoryName])
 
   return (
     <SectionShell>
@@ -261,7 +266,7 @@ export default function LeaderboardPage() {
             <div className="flex gap-2">
               <Button
                 variant="secondary"
-                onClick={() => load()}
+                onClick={load}
                 disabled={loading}
                 className="bg-sky-500 hover:bg-sky-600 text-black font-semibold"
               >
@@ -276,6 +281,15 @@ export default function LeaderboardPage() {
               </Button>
             </div>
           </div>
+
+          {/* Warning */}
+          {!loading && categoryInput.trim() && !resolveCategoryName(categoryInput) && (
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+              <p className="text-sm text-yellow-700">
+                Kategori &apos;{categoryInput}&apos; tidak ditemukan. Coba gunakan nama lengkap atau ID kategori.
+              </p>
+            </div>
+          )}
 
           <Separator className="bg-gray-200" />
 

@@ -41,9 +41,18 @@ import {
   Sigma,
   Award,
 } from 'lucide-react'
-
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+
+// 🧩 Import Dialog dari shadcn
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
 
 type OTDBQuestion = {
   category: string
@@ -56,14 +65,10 @@ type OTDBQuestion = {
 
 type QuizPhase = 'setup' | 'loading' | 'playing' | 'finished' | 'error'
 type Category = { id: number; name: string }
-
 const QUESTION_AMOUNTS = [5, 10, 15] as const
 type Diff = 'easy' | 'medium' | 'hard'
 
-type QItem = {
-  q: OTDBQuestion
-  options: string[]
-}
+type QItem = { q: OTDBQuestion; options: string[] }
 
 interface Theme {
   base: string
@@ -240,10 +245,13 @@ export default function QuizPage() {
   const [displayPoints, setDisplayPoints] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [timeLeft, setTimeLeft] = useState(15)
-
   const [xp, setXp] = useState(0)
   const [streak, setStreak] = useState(0)
   const [lastGain, setLastGain] = useState<number | null>(null)
+
+  // ⚡ State untuk dialog konfirmasi
+  const [openConfirm, setOpenConfirm] = useState(false)
+  const [confirmAction, setConfirmAction] = useState<'play-again' | 'leaderboard' | null>(null)
 
   const isAdvancingRef = useRef(false)
   const timerActiveRef = useRef(false)
@@ -259,7 +267,7 @@ export default function QuizPage() {
       if (phase !== 'setup') return
       try {
         setLoadingCategories(true)
-        const r = await fetch('https://opentdb.com/api_category.php', { cache: 'no-store' })
+        const r = await fetch('https://opentdb.com/api_category.php  ', { cache: 'no-store' })
         const d = await r.json()
         const arr: Category[] = d?.trivia_categories ?? []
         setCategories(arr)
@@ -447,8 +455,26 @@ export default function QuizPage() {
     }
   }
 
-  function handlePlayAgain() {
-    setPhase('setup')
+  // ⚡ Handler untuk tombol Play Again & View Leaderboard
+  const handlePlayAgain = () => {
+    setOpenConfirm(true)
+    setConfirmAction('play-again')
+  }
+
+  const handleViewLeaderboard = () => {
+    setOpenConfirm(true)
+    setConfirmAction('leaderboard')
+  }
+
+  // ⚡ Konfirmasi lanjut tanpa submit
+  const confirmProceed = () => {
+    if (confirmAction === 'play-again') {
+      setPhase('setup')
+    } else if (confirmAction === 'leaderboard') {
+      router.push('/leaderboard')
+    }
+    setOpenConfirm(false)
+    setConfirmAction(null)
   }
 
   // === UI: Setup ===
@@ -564,94 +590,126 @@ export default function QuizPage() {
     const totalPoints = xp
 
     return (
-      <SectionShell>
-        <div className="space-y-6">
-          <Card className="bg-white/80 backdrop-blur-sm border border-white/50 shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-gray-900">Your Results</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="space-y-1">
-                  <div className="text-gray-900 text-2xl font-semibold">{score} / {items.length} correct</div>
-                  <div className="text-lime-600 text-xl font-bold">Total XP: {xp} 🧠</div>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge className={currentTheme.badge}>{catName}</Badge>
-                  {difficulty !== 'any' && (
-                    <Badge variant="outline" className="text-gray-700 border-gray-300">{difficulty}</Badge>
-                  )}
-                  <Badge variant="outline" className="text-gray-700 border-gray-300">{percent}%</Badge>
-                </div>
-              </div>
-              <div className="h-2 w-full rounded bg-gray-200 overflow-hidden">
-                <div className="h-2 bg-sky-500" style={{ width: `${percent}%` }} />
-              </div>
-              <div className="flex flex-wrap gap-3">
-                <Button onClick={handlePlayAgain} className="bg-lime-400 hover:bg-lime-500 text-gray-900 font-semibold">
-                  Play Again
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={submitScore}
-                  disabled={submitting}
-                  className="bg-white/70 hover:bg-white text-gray-900 border border-gray-300"
-                >
-                  {submitting ? 'Submitting…' : 'Submit Score'}
-                </Button>
-                <Button asChild variant="ghost" className="text-gray-900 hover:bg-gray-100">
-                  <Link href="/leaderboard">View Leaderboard</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/80 backdrop-blur-sm border border-white/50 shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-gray-900">Review</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {items.map((item, i) => {
-                const chosen = selections[i]
-                const isCorrect = chosen === item.q.correct_answer
-                return (
-                  <div key={i} className="rounded-lg p-4 bg-gray-50/70 border border-gray-200">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Badge className="bg-indigo-100 text-indigo-800">Q{i + 1}</Badge>
-                        <Badge variant="outline" className="text-gray-700 border-gray-300">{item.q.difficulty}</Badge>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {isCorrect ? (
-                          <span className="inline-flex items-center gap-1 text-green-600 text-sm font-medium">
-                            <CheckCircleIcon className="h-5 w-5" /> Correct
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-red-600 text-sm font-medium">
-                            <XCircleIcon className="h-5 w-5" /> Incorrect
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <h3 className="mt-3 text-gray-900 font-semibold" dangerouslySetInnerHTML={{ __html: item.q.question }} />
-                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {item.options.map((opt) => {
-                        const isChosen = chosen !== '' && chosen === opt
-                        const isTheCorrect = opt === item.q.correct_answer
-                        let cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-gray-200 bg-white text-gray-900'
-                        if (isTheCorrect) cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-green-500 bg-green-100 text-green-800'
-                        if (isChosen && !isTheCorrect) cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-red-500 bg-red-100 text-red-800'
-                        if (isChosen && isTheCorrect) cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-green-500 bg-green-100 text-green-800'
-                        return <div key={opt} className={cls} dangerouslySetInnerHTML={{ __html: opt }} />
-                      })}
-                    </div>
+      <>
+        <SectionShell>
+          <div className="space-y-6">
+            <Card className="bg-white/80 backdrop-blur-sm border border-white/50 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-gray-900">Your Results</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <div className="text-gray-900 text-2xl font-semibold">{score} / {items.length} correct</div>
+                    <div className="text-lime-600 text-xl font-bold">Total XP: {xp} 🧠</div>
                   </div>
-                )
-              })}
-            </CardContent>
-          </Card>
-        </div>
-      </SectionShell>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge className={currentTheme.badge}>{catName}</Badge>
+                    {difficulty !== 'any' && (
+                      <Badge variant="outline" className="text-gray-700 border-gray-300">{difficulty}</Badge>
+                    )}
+                    <Badge variant="outline" className="text-gray-700 border-gray-300">{percent}%</Badge>
+                  </div>
+                </div>
+                <div className="h-2 w-full rounded bg-gray-200 overflow-hidden">
+                  <div className="h-2 bg-sky-500" style={{ width: `${percent}%` }} />
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    onClick={handlePlayAgain}
+                    className="bg-lime-400 hover:bg-lime-500 text-gray-900 font-semibold"
+                  >
+                    Play Again
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={submitScore}
+                    disabled={submitting}
+                    className="bg-white/70 hover:bg-white text-gray-900 border border-gray-300"
+                  >
+                    {submitting ? 'Submitting…' : 'Submit Score'}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={handleViewLeaderboard}
+                    className="text-gray-900 hover:bg-gray-100"
+                  >
+                    View Leaderboard
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white/80 backdrop-blur-sm border border-white/50 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-gray-900">Review</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {items.map((item, i) => {
+                  const chosen = selections[i]
+                  const isCorrect = chosen === item.q.correct_answer
+                  return (
+                    <div key={i} className="rounded-lg p-4 bg-gray-50/70 border border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-indigo-100 text-indigo-800">Q{i + 1}</Badge>
+                          <Badge variant="outline" className="text-gray-700 border-gray-300">{item.q.difficulty}</Badge>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {isCorrect ? (
+                            <span className="inline-flex items-center gap-1 text-green-600 text-sm font-medium">
+                              <CheckCircleIcon className="h-5 w-5" /> Correct
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-red-600 text-sm font-medium">
+                              <XCircleIcon className="h-5 w-5" /> Incorrect
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <h3 className="mt-3 text-gray-900 font-semibold" dangerouslySetInnerHTML={{ __html: item.q.question }} />
+                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {item.options.map((opt) => {
+                          const isChosen = chosen !== '' && chosen === opt
+                          const isTheCorrect = opt === item.q.correct_answer
+                          let cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-gray-200 bg-white text-gray-900'
+                          if (isTheCorrect) cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-green-500 bg-green-100 text-green-800'
+                          if (isChosen && !isTheCorrect) cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-red-500 bg-red-100 text-red-800'
+                          if (isChosen && isTheCorrect) cls = 'rounded-md px-3 py-2 text-sm ring-1 ring-green-500 bg-green-100 text-green-800'
+                          return <div key={opt} className={cls} dangerouslySetInnerHTML={{ __html: opt }} />
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+              </CardContent>
+            </Card>
+          </div>
+        </SectionShell>
+
+        {/* 🧩 Dialog Konfirmasi */}
+        <Dialog open={openConfirm} onOpenChange={setOpenConfirm}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Belum Submit Skor</DialogTitle>
+              <DialogDescription>
+                Apakah kamu yakin ingin melanjutkan tanpa submit skor?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpenConfirm(false)}>
+                Batal
+              </Button>
+              <Button
+                onClick={confirmProceed}
+                className="bg-gray-900 text-white hover:bg-gray-800"
+              >
+                Ya, Lanjut
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </>
     )
   }
 
