@@ -26,7 +26,7 @@ import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { useEffect, useState } from 'react'
 
 export default function Navbar() {
-  const pathname = usePathname()
+  const pathname = usePathname() // ✅ digunakan untuk highlight
   const { data: session, status } = useSession()
 
   const isLoading = status === 'loading'
@@ -59,17 +59,10 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`
-        fixed top-3 z-50
-        bg-white border border-gray-200 shadow-sm rounded-full
-        px-6 py-2 flex items-center gap-4
-        transition-all duration-500 ease-in-out
-        ${showNavbar ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10'}
-        
-        inset-x-3 
-        md:inset-x-6 
-        lg:inset-x-auto lg:w-[90%] lg:max-w-[1200px] lg:left-1/2 lg:-translate-x-1/2
-      `}
+      className={`fixed top-3 z-50 bg-white border border-gray-200 shadow-sm rounded-full
+      px-6 py-2 flex items-center gap-4 transition-all duration-500 ease-in-out
+      ${showNavbar ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10'}
+      inset-x-3 md:inset-x-6 lg:inset-x-auto lg:w-[90%] lg:max-w-[1200px] lg:left-1/2 lg:-translate-x-1/2`}
     >
       {/* === Logo === */}
       <Link
@@ -85,7 +78,11 @@ export default function Navbar() {
         <Button
           asChild
           variant="outline"
-          className="border-black text-black hover:bg-gray-50 text-sm px-4 py-1.5 rounded-md"
+          className={`border-black text-sm px-4 py-1.5 rounded-md ${
+            pathname === '/quiz'
+              ? 'bg-gray-900 text-white'
+              : 'text-black hover:bg-gray-50'
+          }`}
         >
           <Link href="/quiz" className="flex items-center gap-2">
             <PlayCircle className="h-4 w-4" />
@@ -95,7 +92,11 @@ export default function Navbar() {
 
         <Button
           asChild
-          className="bg-lime-400 hover:bg-lime-500 text-black text-sm px-4 py-1.5 rounded-md flex items-center gap-2"
+          className={`text-sm px-4 py-1.5 rounded-md flex items-center gap-2 ${
+            pathname === '/leaderboard'
+              ? 'bg-lime-600 text-black'
+              : 'bg-lime-400 hover:bg-lime-500 text-black'
+          }`}
         >
           <Link href="/leaderboard">
             <Trophy className="h-4 w-4" />
@@ -170,13 +171,15 @@ export default function Navbar() {
             </VisuallyHidden>
 
             <nav className="px-4 pt-10 pb-6 space-y-3">
-              {/* HomePage dihapus */}
-
               <SheetClose asChild>
                 <Button
                   asChild
                   variant="outline"
-                  className="w-full border-black text-black hover:bg-gray-50 text-sm py-2 rounded-md"
+                  className={`w-full border-black text-sm py-2 rounded-md ${
+                    pathname === '/quiz'
+                      ? 'bg-gray-900 text-white'
+                      : 'text-black hover:bg-gray-50'
+                  }`}
                 >
                   <Link href="/quiz" className="flex items-center gap-2">
                     <PlayCircle className="h-4 w-4" />
@@ -188,7 +191,11 @@ export default function Navbar() {
               <SheetClose asChild>
                 <Button
                   asChild
-                  className="w-full bg-lime-500 hover:bg-lime-600 text-black text-sm py-2 rounded-md flex items-center gap-2"
+                  className={`w-full text-sm py-2 rounded-md flex items-center gap-2 ${
+                    pathname === '/leaderboard'
+                      ? 'bg-lime-600 text-black'
+                      : 'bg-lime-400 hover:bg-lime-500 text-black'
+                  }`}
                 >
                   <Link href="/leaderboard">
                     <Trophy className="h-4 w-4" />

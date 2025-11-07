@@ -42,7 +42,6 @@ import {
   Award,
 } from 'lucide-react'
 
-// 🔒 Proteksi autentikasi
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
@@ -58,7 +57,7 @@ type OTDBQuestion = {
 type QuizPhase = 'setup' | 'loading' | 'playing' | 'finished' | 'error'
 type Category = { id: number; name: string }
 
-const QUESTION_AMOUNTS = [5, 10, 15]
+const QUESTION_AMOUNTS = [5, 10, 15] as const
 type Diff = 'easy' | 'medium' | 'hard'
 
 type QItem = {
@@ -66,9 +65,19 @@ type QItem = {
   options: string[]
 }
 
-const getCategoryTheme = (categoryName: string) => {
+interface Theme {
+  base: string
+  hover: string
+  text: string
+  border: string
+  bg: string
+  badge: string
+  ring: string
+}
+
+const getCategoryTheme = (categoryName: string): Theme => {
   const cat = categoryName.toLowerCase()
-  const defaultTheme = {
+  const defaultTheme: Theme = {
     base: 'bg-indigo-500',
     hover: 'hover:bg-indigo-600',
     text: 'text-indigo-900',
@@ -152,8 +161,7 @@ const getCategoryIcon = (categoryName: string): React.ElementType => {
   if (cat.includes('computer')) return Code
   if (cat.includes('math')) return Sigma
   if (cat.includes('science')) return FlaskConical
-  if (cat.includes('history')) return Landmark
-  if (cat.includes('politics')) return Landmark
+  if (cat.includes('history') || cat.includes('politics')) return Landmark
   if (cat.includes('geography')) return Globe
   if (cat.includes('animals')) return Cat
   if (cat.includes('vehicles')) return Car
@@ -215,11 +223,9 @@ function CategoryBox({
 }
 
 export default function QuizPage() {
-  // 🔒 Proteksi autentikasi
-  const {  session, status } = useSession()
+  const { data: _session, status } = useSession()
   const router = useRouter()
 
-  // 🧠 Semua state di awal
   const [phase, setPhase] = useState<QuizPhase>('setup')
   const [categories, setCategories] = useState<Category[]>([])
   const [loadingCategories, setLoadingCategories] = useState(true)
@@ -229,15 +235,12 @@ export default function QuizPage() {
   const [items, setItems] = useState<QItem[]>([])
   const [index, setIndex] = useState(0)
   const [selected, setSelected] = useState<string | null>(null)
-  const [selections, setSelections] = useState<(string | '')[]>(
-    Array(QUESTION_AMOUNTS[0]).fill('')
-  )
+  const [selections, setSelections] = useState<(string | '')[]>(Array(QUESTION_AMOUNTS[0]).fill(''))
   const [score, setScore] = useState(0)
   const [displayPoints, setDisplayPoints] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [timeLeft, setTimeLeft] = useState(15)
 
-  // 🧠 XP System
   const [xp, setXp] = useState(0)
   const [streak, setStreak] = useState(0)
   const [lastGain, setLastGain] = useState<number | null>(null)
@@ -245,38 +248,15 @@ export default function QuizPage() {
   const isAdvancingRef = useRef(false)
   const timerActiveRef = useRef(false)
 
-  // 🔒 Redirect jika belum login
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/api/auth/signin?callbackUrl=/quiz')
     }
   }, [status, router])
 
-  if (status === 'loading') {
-    return (
-      <SectionShell>
-        <Card className="bg-white/80 backdrop-blur-sm border border-white/50 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-gray-900">Checking authentication...</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-2 w-full rounded bg-gray-200 overflow-hidden">
-              <div className="h-2 w-1/3 animate-pulse bg-sky-500" />
-            </div>
-          </CardContent>
-        </Card>
-      </SectionShell>
-    )
-  }
-
-  if (status === 'unauthenticated') {
-    return null
-  }
-
-  // 🔁 Load categories
   useEffect(() => {
-    if (phase !== 'setup') return
     const loadCats = async () => {
+      if (phase !== 'setup') return
       try {
         setLoadingCategories(true)
         const r = await fetch('https://opentdb.com/api_category.php', { cache: 'no-store' })
@@ -292,7 +272,6 @@ export default function QuizPage() {
     loadCats()
   }, [phase])
 
-  // 🔁 Reset saat setup
   useEffect(() => {
     if (phase === 'setup') {
       setSelections(Array(amount).fill(''))
@@ -307,14 +286,12 @@ export default function QuizPage() {
     }
   }, [amount, phase])
 
-  // 🔄 Next question
   const next = useCallback(() => {
     if (isAdvancingRef.current) return
     isAdvancingRef.current = true
     setTimeout(() => {
       isAdvancingRef.current = false
     }, 300)
-
     if (index + 1 < items.length) {
       setIndex((i) => i + 1)
       setSelected(null)
@@ -323,36 +300,28 @@ export default function QuizPage() {
     }
   }, [index, items.length])
 
-  // ⏱️ Timer
   useEffect(() => {
-    if (phase !== 'playing') return
-    if (selected !== null) return
-    if (timerActiveRef.current) return
-
+    if (phase !== 'playing' || selected !== null || timerActiveRef.current) return
     timerActiveRef.current = true
     setTimeLeft(15)
-
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(interval)
           timerActiveRef.current = false
-
-          setSelections((prev) => {
-            const next = [...prev]
-            next[index] = ''
-            return next
+          setSelections((prevSel) => {
+            const nextSel = [...prevSel]
+            nextSel[index] = ''
+            return nextSel
           })
           setStreak(0)
           setLastGain(null)
-
           next()
           return 15
         }
         return prev - 1
       })
     }, 1000)
-
     return () => {
       clearInterval(interval)
       timerActiveRef.current = false
@@ -846,14 +815,16 @@ export default function QuizPage() {
   )
 }
 
-function decodeQuestion(q: any): OTDBQuestion {
+function decodeQuestion(q: Record<string, unknown>): OTDBQuestion {
   return {
-    category: q.category,
-    type: q.type,
-    difficulty: q.difficulty,
-    question: q.question,
-    correct_answer: q.correct_answer,
-    incorrect_answers: q.incorrect_answers,
+    category: String(q.category),
+    type: q.type as 'multiple' | 'boolean',
+    difficulty: q.difficulty as 'easy' | 'medium' | 'hard',
+    question: String(q.question),
+    correct_answer: String(q.correct_answer),
+    incorrect_answers: Array.isArray(q.incorrect_answers)
+      ? (q.incorrect_answers as string[])
+      : [],
   }
 }
 

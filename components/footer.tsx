@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { Loader2 } from 'lucide-react' // ✅ tambahkan icon spinner
 
 export default function AppFooter() {
   const pathname = usePathname()
@@ -37,7 +38,7 @@ export default function AppFooter() {
       } else {
         toast.error('❌ Failed to send feedback. Please try again.')
       }
-    } catch (error) {
+    } catch {
       toast.error('⚠ Something went wrong. Please check your connection.')
     } finally {
       setLoading(false)
@@ -119,16 +120,25 @@ export default function AppFooter() {
                 className="p-2 border border-gray-400/50 rounded-md bg-transparent focus:ring-2 focus:ring-cyan-500"
                 required
               ></textarea>
+
+              {/* Tombol dengan spinner */}
               <button
                 type="submit"
                 disabled={loading}
-                className={`px-4 py-2 font-semibold rounded-md text-white transition ${
+                className={`px-4 py-2 font-semibold rounded-md text-white flex items-center justify-center gap-2 transition ${
                   loading
                     ? 'bg-gray-400 cursor-not-allowed'
                     : 'bg-lime-500 hover:bg-lime-600'
                 }`}
               >
-                {loading ? 'Sending...' : 'Send Feedback'}
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  'Send Feedback'
+                )}
               </button>
             </form>
           </div>
