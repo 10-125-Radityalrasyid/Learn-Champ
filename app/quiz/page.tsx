@@ -467,7 +467,7 @@ export default function QuizPage() {
                   <SelectValue placeholder="Any" />
                 </SelectTrigger>
                 <SelectContent className="bg-white text-gray-900 border-gray-300">
-                  <SelectItem value="any">Random</SelectItem>
+                  <SelectItem value="any">Any</SelectItem>
                   <SelectItem value="easy">Easy</SelectItem>
                   <SelectItem value="medium">Medium</SelectItem>
                   <SelectItem value="hard">Hard</SelectItem>
@@ -768,7 +768,7 @@ export default function QuizPage() {
                 if (showResult && isCorrect) classes = 'w-full text-left rounded-md px-4 py-3 text-sm font-medium bg-green-100 border border-green-500 text-green-800 shadow-lg'
                 if (showResult && isSelected && !isCorrect) classes = 'w-full text-left rounded-md px-4 py-3 text-sm font-medium bg-red-100 border border-red-500 text-red-800 shadow-lg'
                 return (
-                  <button
+                  <Button
                     key={a}
                     disabled={showResult}
                     onClick={() => onSelectAnswer(a)}

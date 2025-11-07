@@ -14,37 +14,28 @@ import { useSession } from 'next-auth/react'
 
 const getCategoryTheme = (categoryName: string) => {
   if (!categoryName) {
-    return { border: 'border-indigo-300', bg: 'bg-indigo-50', badge: 'bg-indigo-100 text-indigo-800' }
+    return { badge: 'bg-indigo-100 text-indigo-800' }
   }
   const cat = categoryName.toLowerCase()
-  if (cat.includes('science') || cat.includes('math') || cat.includes('computer')) {
-    return { border: 'border-blue-300', bg: 'bg-blue-50', badge: 'bg-blue-100 text-blue-800' }
-  }
-  if (cat.includes('history') || cat.includes('politics')) {
-    return { border: 'border-amber-300', bg: 'bg-amber-50', badge: 'bg-amber-100 text-amber-800' }
-  }
-  if (cat.includes('geography') || cat.includes('animals') || cat.includes('vehicles')) {
-    return { border: 'border-emerald-300', bg: 'bg-emerald-50', badge: 'bg-emerald-100 text-emerald-800' }
-  }
-  if (cat.includes('art') || cat.includes('celebrities') || cat.includes('entertainment')) {
-    return { border: 'border-purple-300', bg: 'bg-purple-50', badge: 'bg-purple-100 text-purple-800' }
-  }
-  if (cat.includes('sports') || cat.includes('mythology')) {
-    return { border: 'border-orange-300', bg: 'bg-orange-50', badge: 'bg-orange-100 text-orange-800' }
-  }
-  if (cat.includes('general')) {
-    return { border: 'border-lime-300', bg: 'bg-lime-50', badge: 'bg-lime-100 text-lime-800' }
-  }
-  // Default
-  return { border: 'border-indigo-300', bg: 'bg-indigo-50', badge: 'bg-indigo-100 text-indigo-800' }
+  if (cat.includes('science') || cat.includes('math') || cat.includes('computer'))
+    return { badge: 'bg-blue-100 text-blue-800' }
+  if (cat.includes('history') || cat.includes('politics'))
+    return { badge: 'bg-amber-100 text-amber-800' }
+  if (cat.includes('geography') || cat.includes('animals') || cat.includes('vehicles'))
+    return { badge: 'bg-emerald-100 text-emerald-800' }
+  if (cat.includes('art') || cat.includes('celebrities') || cat.includes('entertainment'))
+    return { badge: 'bg-purple-100 text-purple-800' }
+  if (cat.includes('sports') || cat.includes('mythology'))
+    return { badge: 'bg-orange-100 text-orange-800' }
+  if (cat.includes('general'))
+    return { badge: 'bg-lime-100 text-lime-800' }
+  return { badge: 'bg-indigo-100 text-indigo-800' }
 }
 
 function SectionShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative isolate min-h-screen font-mono">
-      <div
-        className="absolute inset-0 -z-10 bg-[linear-gradient(to_bottom,_#89E5F0_0%,_#B6EFF6_25%,_#CCF3FA_67%,_#FAE9FF_100%)]"
-      />
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_bottom,_#89E5F0_0%,_#B6EFF6_25%,_#CCF3FA_67%,_#FAE9FF_100%)]" />
       <main className="px-6 lg:px-8 py-10 sm:py-14 md:min-h-screen md:flex md:items-center md:justify-center">
         <div className="w-full max-w-4xl">{children}</div>
       </main>
@@ -64,25 +55,69 @@ export default function LeaderboardPage() {
   const [rows, setRows] = useState<Row[]>([])
   const [loading, setLoading] = useState(false)
   const [limit, setLimit] = useState('20')
-  const [category, setCategory] = useState<string>('')
+  const [categoryInput, setCategoryInput] = useState<string>('') // user-entered text
   const [difficulty, setDifficulty] = useState<'any' | 'easy' | 'medium' | 'hard'>('any')
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>([])
   const [name, setName] = useState('')
   const [saving, setSaving] = useState(false)
   const { data: session } = useSession()
   const hasPrefilledName = useRef(false)
 
-  async function load() {
+  // Fetch category list
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await fetch('https://opentdb.com/api_category.php')
+        const data = await res.json()
+        setCategories(data.trivia_categories || [])
+      } catch {
+        toast.error('Failed to load categories')
+      }
+    }
+    fetchCategories()
+  }, [])
+
+  // Helper: resolve ID and name
+  const resolveCategory = (input: string) => {
+    const t = input.trim()
+    if (!t) return { id: '', name: '' }
+    if (/^\d+$/.test(t)) {
+      const byId = categories.find((c) => String(c.id) === t)
+      return { id: t, name: byId?.name || '' }
+    }
+    const exact = categories.find((c) => c.name.toLowerCase() === t.toLowerCase())
+    if (exact) return { id: String(exact.id), name: exact.name }
+    const incl = categories.find((c) => c.name.toLowerCase().includes(t.toLowerCase()))
+    if (incl) return { id: String(incl.id), name: incl.name }
+    return { id: '', name: '' }
+  }
+
+  // Load leaderboard (with fallback: ID → Name)
+  async function load(useFallback = false) {
     try {
       setLoading(true)
       const q = new URLSearchParams()
-      if (category.trim()) q.set('category', category.trim())
+      const { id, name } = resolveCategory(categoryInput)
+      const categoryParam = useFallback ? name : id
+      if (categoryParam) q.set('category', categoryParam)
       if (difficulty !== 'any') q.set('difficulty', difficulty)
       q.set('limit', limit)
+
       const res = await fetch(`/api/leaderboard?${q.toString()}`, { cache: 'no-store' })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()
-      setRows(data.leaderboard || [])
-    } catch {
+
+      // 🔁 Fallback: if no results and we haven't tried name-based yet
+      if (!useFallback && data?.leaderboard?.length === 0 && id && name && name !== id) {
+        console.log('No results with ID, retrying with name fallback...')
+        return load(true)
+      }
+
+      setRows(data?.leaderboard || [])
+    } catch (err) {
+      console.error('Leaderboard load error:', err)
       toast.error('Failed to load leaderboard')
+      setRows([])
     } finally {
       setLoading(false)
     }
@@ -90,7 +125,6 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
@@ -109,9 +143,8 @@ export default function LeaderboardPage() {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ displayName: name.trim() }),
       })
-      if (!r.ok) {
-        toast.error('Could not save nickname')
-      } else {
+      if (!r.ok) toast.error('Could not save nickname')
+      else {
         toast.success('Nickname saved!')
         setName('')
         load()
@@ -127,10 +160,13 @@ export default function LeaderboardPage() {
 
   const subtitle = useMemo(() => {
     const parts: string[] = []
-    if (category.trim()) parts.push(`Category: ${category.trim()}`)
+    if (categoryInput.trim()) {
+      const { name } = resolveCategory(categoryInput)
+      parts.push(`Category: ${name || categoryInput}`)
+    }
     if (difficulty !== 'any') parts.push(`Difficulty: ${difficulty}`)
     return parts.join(' • ')
-  }, [category, difficulty])
+  }, [categoryInput, difficulty, categories])
 
   return (
     <SectionShell>
@@ -147,7 +183,6 @@ export default function LeaderboardPage() {
               )}
             </div>
 
-            {/* nickname */}
             <div className="flex items-center gap-2">
               <Input
                 value={name}
@@ -167,19 +202,27 @@ export default function LeaderboardPage() {
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* filters */}
+          {/* Filters */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full sm:w-auto">
+              {/* Category Input */}
               <div className="flex flex-col gap-2">
                 <label className="text-sm text-gray-700">Category</label>
                 <Input
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  placeholder="e.g. 9 or General Knowledge"
+                  list="category-list"
+                  value={categoryInput}
+                  onChange={(e) => setCategoryInput(e.target.value)}
+                  placeholder="Start typing… e.g. math, general, history or use ID"
                   className="bg-white/70 text-gray-900 placeholder:text-gray-500 border-gray-300"
                 />
+                <datalist id="category-list">
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.name} />
+                  ))}
+                </datalist>
               </div>
 
+              {/* Difficulty */}
               <div className="flex flex-col gap-2">
                 <label className="text-sm text-gray-700">Difficulty</label>
                 <Select
@@ -198,6 +241,7 @@ export default function LeaderboardPage() {
                 </Select>
               </div>
 
+              {/* Limit */}
               <div className="flex flex-col gap-2">
                 <label className="text-sm text-gray-700">Limit</label>
                 <Select value={limit} onValueChange={(v) => setLimit(v)}>
@@ -217,9 +261,9 @@ export default function LeaderboardPage() {
             <div className="flex gap-2">
               <Button
                 variant="secondary"
-                onClick={load}
+                onClick={() => load()}
                 disabled={loading}
-                className="bg-sky-500 hover:bg-sky-600 text-balck font-semibold"
+                className="bg-sky-500 hover:bg-sky-600 text-black font-semibold"
               >
                 {loading ? 'Loading…' : 'Filter'}
               </Button>
@@ -235,6 +279,7 @@ export default function LeaderboardPage() {
 
           <Separator className="bg-gray-200" />
 
+          {/* Table */}
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -283,7 +328,7 @@ export default function LeaderboardPage() {
           <div className="flex flex-wrap items-center justify-between gap-3 pt-4">
             <p className="text-sm text-gray-600">
               Showing top <span className="text-gray-900 font-medium">{limit}</span>{' '}
-              {category || difficulty !== 'any' ? 'with filters' : 'overall'}.
+              {categoryInput || difficulty !== 'any' ? 'with filters' : 'overall'}.
             </p>
             <div className="flex gap-2">
               <Button
