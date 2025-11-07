@@ -26,7 +26,7 @@ import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { useEffect, useState } from 'react'
 
 export default function Navbar() {
-  const pathname = usePathname() // ✅ digunakan untuk highlight
+  const pathname = usePathname()
   const { data: session, status } = useSession()
 
   const isLoading = status === 'loading'
@@ -60,7 +60,7 @@ export default function Navbar() {
   return (
     <nav
       className={`fixed top-3 z-50 bg-white border border-gray-200 shadow-sm rounded-full
-      px-6 py-2 flex items-center gap-4 transition-all duration-500 ease-in-out
+      px-4 sm:px-6 py-2 flex items-center justify-between gap-3 transition-all duration-500 ease-in-out
       ${showNavbar ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10'}
       inset-x-3 md:inset-x-6 lg:inset-x-auto lg:w-[90%] lg:max-w-[1200px] lg:left-1/2 lg:-translate-x-1/2`}
     >
@@ -74,7 +74,7 @@ export default function Navbar() {
       </Link>
 
       {/* === Menu Tengah (Desktop) === */}
-      <div className="hidden sm:flex items-center gap-3 font-mono flex-1 justify-center">
+      <div className="hidden sm:flex items-center justify-center gap-3 flex-1 font-mono">
         <Button
           asChild
           variant="outline"
@@ -84,7 +84,7 @@ export default function Navbar() {
               : 'text-black hover:bg-gray-50'
           }`}
         >
-          <Link href="/quiz" className="flex items-center gap-2">
+          <Link href="/quiz" className="flex items-center justify-center gap-2">
             <PlayCircle className="h-4 w-4" />
             Quiz
           </Link>
@@ -92,7 +92,7 @@ export default function Navbar() {
 
         <Button
           asChild
-          className={`text-sm px-4 py-1.5 rounded-md flex items-center gap-2 ${
+          className={`text-sm px-4 py-1.5 rounded-md flex items-center justify-center gap-2 ${
             pathname === '/leaderboard'
               ? 'bg-lime-600 text-black'
               : 'bg-lime-400 hover:bg-lime-500 text-black'
@@ -106,7 +106,7 @@ export default function Navbar() {
       </div>
 
       {/* === Profil (Desktop) === */}
-      <div className="hidden sm:flex items-center min-w-[100px] justify-end font-mono flex-shrink-0">
+      <div className="hidden sm:flex items-center justify-end min-w-[100px] font-mono flex-shrink-0">
         {isLoading ? (
           <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -150,14 +150,14 @@ export default function Navbar() {
       </div>
 
       {/* === Menu Mobile === */}
-      <div className="sm:hidden ml-auto">
+      <div className="sm:hidden ml-auto flex items-center">
         <Sheet>
           <SheetTrigger asChild>
             <button
               className="p-1.5 rounded-md hover:bg-gray-100 text-gray-700 transition"
               aria-label="Buka menu"
             >
-              <Menu className="h-4 w-4" />
+              <Menu className="h-5 w-5" />
             </button>
           </SheetTrigger>
 
@@ -165,7 +165,6 @@ export default function Navbar() {
             side="right"
             className="w-[75%] sm:w-[20rem] p-0 bg-white border-l border-gray-200 flex flex-col justify-between font-mono"
           >
-            {/* ✅ Accessibility title (tidak terlihat di layar) */}
             <VisuallyHidden>
               <SheetTitle>Menu Navigasi</SheetTitle>
             </VisuallyHidden>
@@ -181,7 +180,7 @@ export default function Navbar() {
                       : 'text-black hover:bg-gray-50'
                   }`}
                 >
-                  <Link href="/quiz" className="flex items-center gap-2">
+                  <Link href="/quiz" className="flex items-center justify-center gap-2">
                     <PlayCircle className="h-4 w-4" />
                     Quiz
                   </Link>
@@ -191,7 +190,7 @@ export default function Navbar() {
               <SheetClose asChild>
                 <Button
                   asChild
-                  className={`w-full text-sm py-2 rounded-md flex items-center gap-2 ${
+                  className={`w-full text-sm py-2 rounded-md flex items-center justify-center gap-2 ${
                     pathname === '/leaderboard'
                       ? 'bg-lime-600 text-black'
                       : 'bg-lime-400 hover:bg-lime-500 text-black'
