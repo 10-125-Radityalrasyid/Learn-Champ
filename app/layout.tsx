@@ -17,17 +17,59 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Learn Champ",
-  description: "Challenge your mind with quizzes and leaderboards",
+  title: "Learn Champ | Challenge your mind with quizzes and leaderboards",
+  description: "Learn Champ adalah platform pembelajaran interaktif untuk mengasah pengetahuan melalui kuis dan papan peringkat.",
+  keywords: ["LearnChamp", "Learn Champ", "quiz platform", "belajar interaktif", "education gamification"],
+  openGraph: {
+    title: "Learn Champ - Quiz & Leaderboard Platform",
+    description: "Challenge your mind with Learn Champ — kuis, leaderboard, dan pembelajaran menyenangkan!",
+    url: "https://learnchamp.vercel.app",
+    siteName: "Learn Champ",
+    locale: "en_US",
+    type: "website",
+  },
+  alternates: {
+    canonical: "https://learnchamp.vercel.app",
+  },
+  verification: {
+    google: "mJytP_orFWJNIm6N-2AAnM9cl6o7vfRDNpyQLM965FE",
+  },
 };
 
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const session = await auth()
+  const session = await auth();
 
   return (
     <html lang="en" className="h-full">
+      <head>
+        {/* ✅ JSON-LD Structured Data Schema for SEO */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              "name": "Learn Champ",
+              "alternateName": ["LearnChamp"],
+              "url": "https://learnchamp.vercel.app",
+              "description":
+                "Learn Champ adalah platform pembelajaran interaktif berbasis kuis dan leaderboard untuk meningkatkan daya pikir dan semangat belajar.",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Learn Champ",
+                "logo": "https://learnchamp.vercel.app/logo.png",
+              },
+              "potentialAction": {
+                "@type": "SearchAction",
+                "target": "https://learnchamp.vercel.app/search?q={search_term_string}",
+                "query-input": "required name=search_term_string",
+              },
+            }),
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} h-full bg-gradient-to-b from-[#8EE5F0] to-[#B6EFF6] antialiased`}
       >
