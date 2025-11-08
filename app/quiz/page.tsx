@@ -249,6 +249,9 @@ export default function QuizPage() {
   const [streak, setStreak] = useState(0)
   const [lastGain, setLastGain] = useState<number | null>(null)
 
+  // ✅ State baru: apakah skor sudah disubmit?
+  const [hasSubmitted, setHasSubmitted] = useState(false)
+
   // ⚡ State untuk dialog konfirmasi
   const [openConfirm, setOpenConfirm] = useState(false)
   const [confirmAction, setConfirmAction] = useState<'play-again' | 'leaderboard' | null>(null)
@@ -267,7 +270,7 @@ export default function QuizPage() {
       if (phase !== 'setup') return
       try {
         setLoadingCategories(true)
-        const r = await fetch('https://opentdb.com/api_category.php  ', { cache: 'no-store' })
+        const r = await fetch('https://opentdb.com/api_category.php', { cache: 'no-store' })
         const d = await r.json()
         const arr: Category[] = d?.trivia_categories ?? []
         setCategories(arr)
@@ -291,6 +294,7 @@ export default function QuizPage() {
       setLastGain(null)
       setItems([])
       setIndex(0)
+      setHasSubmitted(false) // Reset flag saat kembali ke setup
     }
   }, [amount, phase])
 
@@ -442,6 +446,7 @@ export default function QuizPage() {
       if (!r.ok) {
         toast.error('Failed to submit score')
       } else {
+        setHasSubmitted(true) // ✅ Tandai bahwa skor sudah disubmit
         toast.success('Score submitted! 🎉', {
           action: {
             label: 'View Leaderboard',
@@ -457,13 +462,21 @@ export default function QuizPage() {
 
   // ⚡ Handler untuk tombol Play Again & View Leaderboard
   const handlePlayAgain = () => {
-    setOpenConfirm(true)
-    setConfirmAction('play-again')
+    if (hasSubmitted) {
+      setPhase('setup')
+    } else {
+      setOpenConfirm(true)
+      setConfirmAction('play-again')
+    }
   }
 
   const handleViewLeaderboard = () => {
-    setOpenConfirm(true)
-    setConfirmAction('leaderboard')
+    if (hasSubmitted) {
+      router.push('/leaderboard')
+    } else {
+      setOpenConfirm(true)
+      setConfirmAction('leaderboard')
+    }
   }
 
   // ⚡ Konfirmasi lanjut tanpa submit
@@ -691,20 +704,20 @@ export default function QuizPage() {
         <Dialog open={openConfirm} onOpenChange={setOpenConfirm}>
           <DialogContent className="max-w-sm">
             <DialogHeader>
-              <DialogTitle>Belum Submit Skor</DialogTitle>
+              <DialogTitle>Score Not Submitted</DialogTitle>
               <DialogDescription>
-                Apakah kamu yakin ingin melanjutkan tanpa submit skor?
+                Are you sure you want to continue without submitting your score?
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button variant="outline" onClick={() => setOpenConfirm(false)}>
-                Batal
+                Cancel
               </Button>
               <Button
                 onClick={confirmProceed}
                 className="bg-gray-900 text-white hover:bg-gray-800"
               >
-                Ya, Lanjut
+                Yes, Continue
               </Button>
             </DialogFooter>
           </DialogContent>

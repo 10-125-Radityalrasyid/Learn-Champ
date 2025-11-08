@@ -54,8 +54,8 @@ export default function Navbar() {
   const handleSignOut = async () => {
     try {
       await signOut({ redirect: false })
-      toast.success('Logout berhasil 👋', {
-        description: 'Sampai jumpa di sesi belajar berikutnya!',
+      toast.success('Successfully logged out 👋', {
+        description: 'See you in your next learning session!',
         duration: 3000,
       })
       router.push('/')
@@ -296,17 +296,17 @@ export default function Navbar() {
       <Dialog open={openLogout} onOpenChange={setOpenLogout}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Konfirmasi Logout</DialogTitle>
+            <DialogTitle>Logout Confirmation</DialogTitle>
             <DialogDescription>
-              Apakah kamu yakin ingin keluar dari sesi ini?
+              Are you sure you want to log out of this session?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpenLogout(false)}>
-              Batal
+              Cancel
             </Button>
             <Button onClick={handleSignOut} className="bg-gray-900 text-white hover:bg-gray-800">
-              Ya, Logout
+              Yes, Logout
             </Button>
           </DialogFooter>
         </DialogContent>
