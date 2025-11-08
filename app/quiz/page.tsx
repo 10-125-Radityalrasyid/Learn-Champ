@@ -715,7 +715,7 @@ export default function QuizPage() {
               </Button>
               <Button
                 onClick={confirmProceed}
-                className="bg-gray-900 text-white hover:bg-gray-800"
+                className="bg-lime-400 text-black hover:bg-lime-500"
               >
                 Yes, Continue
               </Button>

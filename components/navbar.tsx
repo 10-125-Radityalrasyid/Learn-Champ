@@ -305,7 +305,7 @@ export default function Navbar() {
             <Button variant="outline" onClick={() => setOpenLogout(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSignOut} className="bg-gray-900 text-white hover:bg-gray-800">
+            <Button onClick={handleSignOut} className="bg-lime-400 text-black hover:bg-lime-500">
               Yes, Logout
             </Button>
           </DialogFooter>
