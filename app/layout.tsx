@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     siteName: "Learn Champ",
     images: [
       {
-        url: "https://learnchamp.vercel.app/learnchamp.png",
+        url: "https://learnchamp.vercel.app/learnchamp.svg",
         width: 800,
         height: 800,
         alt: "Learn Champ Logo",
@@ -50,12 +50,12 @@ export const metadata: Metadata = {
     title: "Learn Champ | Quiz & Leaderboard Platform",
     description:
       "Tingkatkan pengetahuanmu dengan Learn Champ — platform kuis dan leaderboard interaktif.",
-    images: ["https://learnchamp.vercel.app/learnchamp.png"],
+    images: ["https://learnchamp.vercel.app/learnchamp.svg"],
   },
   icons: {
-    icon: "/learnchamp.png",
-    shortcut: "/learnchamp.png",
-    apple: "/learnchamp.png",
+    icon: "/learnchamp.svg",
+    shortcut: "/learnchamp.svg",
+    apple: "/learnchamp.svg",
   },
   alternates: {
     canonical: "https://learnchamp.vercel.app",
@@ -90,7 +90,7 @@ export default async function RootLayout({
                 "name": "Learn Champ",
                 "logo": {
                   "@type": "ImageObject",
-                  "url": "https://learnchamp.vercel.app/learnchamp.png",
+                  "url": "https://learnchamp.vercel.app/learnchamp.svg",
                 },
               },
               "potentialAction": {
