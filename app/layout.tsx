@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
-import '@/app/globals.css'
-import ClientNavbarWrapper from '@/components/client-navbar-wrapper' 
-import { SessionProvider } from '@/components/providers/session-provider'
-import { auth } from '@/auth'
+import "@/app/globals.css";
+import ClientNavbarWrapper from "@/components/client-navbar-wrapper";
+import { SessionProvider } from "@/components/providers/session-provider";
+import { auth } from "@/auth";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,16 +17,45 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Learn Champ | Challenge your mind with quizzes and leaderboards",
-  description: "Learn Champ adalah platform pembelajaran interaktif untuk mengasah pengetahuan melalui kuis dan papan peringkat.",
-  keywords: ["LearnChamp", "Learn Champ", "quiz platform", "belajar interaktif", "education gamification"],
+  title:
+    "Learn Champ | Challenge your mind with quizzes and leaderboards",
+  description:
+    "Learn Champ adalah platform pembelajaran interaktif untuk mengasah pengetahuan melalui kuis dan papan peringkat.",
+  keywords: [
+    "LearnChamp",
+    "Learn Champ",
+    "quiz platform",
+    "belajar interaktif",
+    "education gamification",
+  ],
   openGraph: {
     title: "Learn Champ - Quiz & Leaderboard Platform",
-    description: "Challenge your mind with Learn Champ — kuis, leaderboard, dan pembelajaran menyenangkan!",
+    description:
+      "Challenge your mind with Learn Champ — kuis, leaderboard, dan pembelajaran menyenangkan!",
     url: "https://learnchamp.vercel.app",
     siteName: "Learn Champ",
+    images: [
+      {
+        url: "https://learnchamp.vercel.app/learnchamp.png",
+        width: 800,
+        height: 800,
+        alt: "Learn Champ Logo",
+      },
+    ],
     locale: "en_US",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Learn Champ | Quiz & Leaderboard Platform",
+    description:
+      "Tingkatkan pengetahuanmu dengan Learn Champ — platform kuis dan leaderboard interaktif.",
+    images: ["https://learnchamp.vercel.app/learnchamp.png"],
+  },
+  icons: {
+    icon: "/learnchamp.png",
+    shortcut: "/learnchamp.png",
+    apple: "/learnchamp.png",
   },
   alternates: {
     canonical: "https://learnchamp.vercel.app",
@@ -59,11 +88,15 @@ export default async function RootLayout({
               "publisher": {
                 "@type": "Organization",
                 "name": "Learn Champ",
-                "logo": "https://learnchamp.vercel.app/logo.png",
+                "logo": {
+                  "@type": "ImageObject",
+                  "url": "https://learnchamp.vercel.app/learnchamp.png",
+                },
               },
               "potentialAction": {
                 "@type": "SearchAction",
-                "target": "https://learnchamp.vercel.app/search?q={search_term_string}",
+                "target":
+                  "https://learnchamp.vercel.app/search?q={search_term_string}",
                 "query-input": "required name=search_term_string",
               },
             }),
